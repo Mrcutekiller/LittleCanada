@@ -179,12 +179,13 @@ function perturbGeometry(geometry: THREE.BufferGeometry, scale: number = 0.04, f
 // ─── Procedural Food Models (High Realism) ─────────────────────────────────────
 
 // ── Burger ──────────────────────────────────────────────────────────────────────
-function BurgerModel({ exploded, visibleLayers, onLayerClick }: {
-  exploded: boolean; visibleLayers: Set<string>; onLayerClick: (id: string) => void
+function BurgerModel({ exploded, explodeProgress, visibleLayers, onLayerClick }: {
+  exploded: boolean; explodeProgress: number; visibleLayers: Set<string>; onLayerClick: (id: string) => void
 }) {
   const layers = useMemo(() => getIngredientLayers('burger'), [])
   const refs = useRef<Record<string, THREE.Group>>({})
-  const targetPositions = useRef<Record<string, number>>({})
+  const currentPositions = useRef<Record<string, number>>({})
+  const groupRef = useRef<THREE.Group>(null)
 
   const geometries = useMemo(() => {
     const topBun = new THREE.SphereGeometry(0.72, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.52)
@@ -211,16 +212,23 @@ function BurgerModel({ exploded, visibleLayers, onLayerClick }: {
   }, [])
 
   useEffect(() => {
-    layers.forEach(l => { targetPositions.current[l.id] = exploded ? l.explodedY : l.defaultY })
-  }, [exploded, layers])
+    layers.forEach(l => {
+      currentPositions.current[l.id] = l.defaultY + (l.explodedY - l.defaultY) * explodeProgress
+    })
+  }, [explodeProgress, layers])
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.03)
     layers.forEach(l => {
       const ref = refs.current[l.id]
       if (!ref) return
-      ref.position.y = THREE.MathUtils.lerp(ref.position.y, targetPositions.current[l.id] ?? l.defaultY, 8 * dt)
+      const target = currentPositions.current[l.id] ?? l.defaultY
+      ref.position.y = THREE.MathUtils.lerp(ref.position.y, target, 8 * dt)
     })
+    // Perspective tilt during explode
+    if (groupRef.current) {
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, explodeProgress * 0.15, 6 * dt)
+    }
   })
 
   const handleClick = useCallback((id: string) => (e: any) => {
@@ -228,7 +236,7 @@ function BurgerModel({ exploded, visibleLayers, onLayerClick }: {
   }, [onLayerClick])
 
   return (
-    <group scale={1.7}>
+    <group ref={groupRef} scale={1.7}>
       {/* Bottom Bun */}
       {visibleLayers.has('bottom-bun') && (
         <group ref={el => { if (el) refs.current['bottom-bun'] = el }} position={[0, -0.42, 0]} onClick={handleClick('bottom-bun')}>
@@ -381,12 +389,13 @@ function BurgerModel({ exploded, visibleLayers, onLayerClick }: {
 }
 
 // ── Pizza ───────────────────────────────────────────────────────────────────────
-function PizzaModel({ exploded, visibleLayers, onLayerClick }: {
-  exploded: boolean; visibleLayers: Set<string>; onLayerClick: (id: string) => void
+function PizzaModel({ exploded, explodeProgress, visibleLayers, onLayerClick }: {
+  exploded: boolean; explodeProgress: number; visibleLayers: Set<string>; onLayerClick: (id: string) => void
 }) {
   const layers = useMemo(() => getIngredientLayers('pizza'), [])
   const refs = useRef<Record<string, THREE.Group>>({})
-  const targetPositions = useRef<Record<string, number>>({})
+  const currentPositions = useRef<Record<string, number>>({})
+  const groupRef = useRef<THREE.Group>(null)
 
   const crustGeom = useMemo(() => {
     const g = new THREE.TorusGeometry(0.88, 0.065, 8, 32)
@@ -395,16 +404,22 @@ function PizzaModel({ exploded, visibleLayers, onLayerClick }: {
   }, [])
 
   useEffect(() => {
-    layers.forEach(l => { targetPositions.current[l.id] = exploded ? l.explodedY : l.defaultY })
-  }, [exploded, layers])
+    layers.forEach(l => {
+      currentPositions.current[l.id] = l.defaultY + (l.explodedY - l.defaultY) * explodeProgress
+    })
+  }, [explodeProgress, layers])
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.03)
     layers.forEach(l => {
       const ref = refs.current[l.id]
       if (!ref) return
-      ref.position.y = THREE.MathUtils.lerp(ref.position.y, targetPositions.current[l.id] ?? l.defaultY, 8 * dt)
+      const target = currentPositions.current[l.id] ?? l.defaultY
+      ref.position.y = THREE.MathUtils.lerp(ref.position.y, target, 8 * dt)
     })
+    if (groupRef.current) {
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, explodeProgress * 0.18, 6 * dt)
+    }
   })
 
   const handleClick = useCallback((id: string) => (e: any) => {
@@ -412,7 +427,7 @@ function PizzaModel({ exploded, visibleLayers, onLayerClick }: {
   }, [onLayerClick])
 
   return (
-    <group scale={1.85}>
+    <group ref={groupRef} scale={1.85}>
       {visibleLayers.has('crust') && (
         <group ref={el => { if (el) refs.current['crust'] = el }} position={[0, 0.02, 0]} onClick={handleClick('crust')}>
           {/* Puffy crust ring */}
@@ -532,16 +547,19 @@ function PizzaModel({ exploded, visibleLayers, onLayerClick }: {
 }
 
 // ── Sandwich ────────────────────────────────────────────────────────────────────
-function SandwichModel({ exploded, visibleLayers, onLayerClick }: {
-  exploded: boolean; visibleLayers: Set<string>; onLayerClick: (id: string) => void
+function SandwichModel({ exploded, explodeProgress, visibleLayers, onLayerClick }: {
+  exploded: boolean; explodeProgress: number; visibleLayers: Set<string>; onLayerClick: (id: string) => void
 }) {
   const layers = useMemo(() => getIngredientLayers('sandwich'), [])
   const refs = useRef<Record<string, THREE.Group>>({})
-  const targetPositions = useRef<Record<string, number>>({})
+  const currentPositions = useRef<Record<string, number>>({})
+  const groupRef = useRef<THREE.Group>(null)
 
   useEffect(() => {
-    layers.forEach(l => { targetPositions.current[l.id] = exploded ? l.explodedY : l.defaultY })
-  }, [exploded, layers])
+    layers.forEach(l => {
+      currentPositions.current[l.id] = l.defaultY + (l.explodedY - l.defaultY) * explodeProgress
+    })
+  }, [explodeProgress, layers])
 
   const s = 1.6
 
@@ -550,8 +568,12 @@ function SandwichModel({ exploded, visibleLayers, onLayerClick }: {
     layers.forEach(l => {
       const ref = refs.current[l.id]
       if (!ref) return
-      ref.position.y = THREE.MathUtils.lerp(ref.position.y, targetPositions.current[l.id] ?? l.defaultY, 8 * dt)
+      const target = currentPositions.current[l.id] ?? l.defaultY
+      ref.position.y = THREE.MathUtils.lerp(ref.position.y, target, 8 * dt)
     })
+    if (groupRef.current) {
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, explodeProgress * 0.12, 6 * dt)
+    }
   })
 
   const handleClick = useCallback((id: string) => (e: any) => {
@@ -559,7 +581,7 @@ function SandwichModel({ exploded, visibleLayers, onLayerClick }: {
   }, [onLayerClick])
 
   return (
-    <group scale={s}>
+    <group ref={groupRef} scale={s}>
       {visibleLayers.has('bottom-bread') && (
         <group ref={el => { if (el) refs.current['bottom-bread'] = el }} position={[0, -0.28, 0]} onClick={handleClick('bottom-bread')}>
           <RoundedBox args={[1.4, 0.18, 0.9]} radius={0.06}>
@@ -628,16 +650,19 @@ function SandwichModel({ exploded, visibleLayers, onLayerClick }: {
 }
 
 // ── Dessert ─────────────────────────────────────────────────────────────────────
-function DessertModel({ exploded, visibleLayers, onLayerClick }: {
-  exploded: boolean; visibleLayers: Set<string>; onLayerClick: (id: string) => void
+function DessertModel({ exploded, explodeProgress, visibleLayers, onLayerClick }: {
+  exploded: boolean; explodeProgress: number; visibleLayers: Set<string>; onLayerClick: (id: string) => void
 }) {
   const layers = useMemo(() => getIngredientLayers('dessert'), [])
   const refs = useRef<Record<string, THREE.Group>>({})
-  const targetPositions = useRef<Record<string, number>>({})
+  const currentPositions = useRef<Record<string, number>>({})
+  const groupRef = useRef<THREE.Group>(null)
 
   useEffect(() => {
-    layers.forEach(l => { targetPositions.current[l.id] = exploded ? l.explodedY : l.defaultY })
-  }, [exploded, layers])
+    layers.forEach(l => {
+      currentPositions.current[l.id] = l.defaultY + (l.explodedY - l.defaultY) * explodeProgress
+    })
+  }, [explodeProgress, layers])
 
   const s = 1.75
 
@@ -646,8 +671,12 @@ function DessertModel({ exploded, visibleLayers, onLayerClick }: {
     layers.forEach(l => {
       const ref = refs.current[l.id]
       if (!ref) return
-      ref.position.y = THREE.MathUtils.lerp(ref.position.y, targetPositions.current[l.id] ?? l.defaultY, 8 * dt)
+      const target = currentPositions.current[l.id] ?? l.defaultY
+      ref.position.y = THREE.MathUtils.lerp(ref.position.y, target, 8 * dt)
     })
+    if (groupRef.current) {
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, explodeProgress * 0.12, 6 * dt)
+    }
   })
 
   const handleClick = useCallback((id: string) => (e: any) => {
@@ -655,7 +684,7 @@ function DessertModel({ exploded, visibleLayers, onLayerClick }: {
   }, [onLayerClick])
 
   return (
-    <group scale={s}>
+    <group ref={groupRef} scale={s}>
       {visibleLayers.has('cone') && (
         <group ref={el => { if (el) refs.current['cone'] = el }} position={[0, -0.45, 0]} onClick={handleClick('cone')}>
           <mesh>
@@ -949,28 +978,30 @@ function ToppingMesh({ instance, onDelete }: { instance: ToppingInstance; onDele
     const inst = instance
     const dt = Math.min(delta, 0.025)
     if (inst.status === 'falling') {
-      inst.vy -= 24 * dt
+      inst.vy -= 18 * dt  // Gravity
       inst.x += inst.vx * dt; inst.y += inst.vy * dt; inst.z += inst.vz * dt
       inst.rotX += inst.rotVx * dt; inst.rotY += inst.rotVy * dt; inst.rotZ += inst.rotVz * dt
-      inst.scale = THREE.MathUtils.lerp(inst.scale, inst.targetScale, 12 * dt)
+      inst.scale = THREE.MathUtils.lerp(inst.scale, inst.targetScale, 10 * dt)
       if (inst.y <= inst.targetY) {
         inst.y = inst.targetY
-        if (Math.abs(inst.vy) > 1.0 && inst.bounceCount < 2) {
-          inst.vy = -inst.vy * inst.elasticity; inst.vx *= 0.35; inst.vz *= 0.35; inst.bounceCount++
+        if (Math.abs(inst.vy) > 0.8 && inst.bounceCount < 2) {
+          inst.vy = -inst.vy * inst.elasticity; inst.vx *= 0.4; inst.vz *= 0.4; inst.rotVx *= 0.5; inst.rotVy *= 0.5; inst.rotVz *= 0.5; inst.bounceCount++
         } else {
           inst.vy=0; inst.vx=0; inst.vz=0; inst.rotVx=0; inst.rotVy=0; inst.rotVz=0; inst.status = 'landed'
         }
       }
     } else if (inst.status === 'landed') {
-      inst.x = THREE.MathUtils.lerp(inst.x, inst.targetX, 15*dt)
-      inst.y = THREE.MathUtils.lerp(inst.y, inst.targetY, 15*dt)
-      inst.z = THREE.MathUtils.lerp(inst.z, inst.targetZ, 15*dt)
-      inst.scale = THREE.MathUtils.lerp(inst.scale, inst.targetScale, 15*dt)
+      inst.x = THREE.MathUtils.lerp(inst.x, inst.targetX, 12*dt)
+      inst.y = THREE.MathUtils.lerp(inst.y, inst.targetY, 12*dt)
+      inst.z = THREE.MathUtils.lerp(inst.z, inst.targetZ, 12*dt)
+      inst.scale = THREE.MathUtils.lerp(inst.scale, inst.targetScale, 12*dt)
     } else if (inst.status === 'removing') {
       inst.x += inst.vx*dt; inst.y += inst.vy*dt; inst.z += inst.vz*dt
-      inst.vy += 8*dt
+      inst.vy += 6*dt  // Gentle upward drift
+      inst.vx *= 0.98; inst.vz *= 0.98  // Air resistance
       inst.rotX += inst.rotVx*dt; inst.rotY += inst.rotVy*dt; inst.rotZ += inst.rotVz*dt
-      inst.scale = THREE.MathUtils.lerp(inst.scale, 0, 14*dt)
+      inst.rotVx *= 0.97; inst.rotVy *= 0.97; inst.rotVz *= 0.97  // Dampen rotation
+      inst.scale = THREE.MathUtils.lerp(inst.scale, 0, 10*dt)
       if (inst.scale < 0.015 || inst.y > 6.0) onDelete(inst.id)
     }
     meshRef.current.position.set(inst.x, inst.y, inst.z)
@@ -1000,24 +1031,29 @@ function PhysicsToppings({ type, selectedToppings }: { type: string; selectedTop
             const theta = (i*(Math.PI*2)/5) + (Math.random()-0.5)*0.5
             const targetX = r*Math.cos(theta), targetZ = r*Math.sin(theta)
             const targetY = getToppingHeight(type, toppingId)
+            // Staggered fall: each piece drops slightly after the previous
+            const staggerDelay = i * 0.08
             next.push({
               id, toppingId,
-              x: targetX+(Math.random()-0.5)*0.3, y: 3.2+Math.random()*0.8, z: targetZ+(Math.random()-0.5)*0.3,
-              vx: (Math.random()-0.5)*0.8, vy: 1.0+Math.random()*1.5, vz: (Math.random()-0.5)*0.8,
+              x: targetX+(Math.random()-0.5)*0.4, y: 3.5+Math.random()*1.0+staggerDelay*3, z: targetZ+(Math.random()-0.5)*0.4,
+              vx: (Math.random()-0.5)*0.6, vy: 0.5+Math.random()*1.0, vz: (Math.random()-0.5)*0.6,
               targetX, targetY, targetZ,
               rotX: Math.random()*Math.PI*2, rotY: Math.random()*Math.PI*2, rotZ: Math.random()*Math.PI*2,
-              rotVx: (Math.random()-0.5)*16, rotVy: (Math.random()-0.5)*16, rotVz: (Math.random()-0.5)*16,
+              rotVx: (Math.random()-0.5)*12, rotVy: (Math.random()-0.5)*12, rotVz: (Math.random()-0.5)*12,
               scale: 0.01, targetScale: 0.85+Math.random()*0.3,
-              status: 'falling', elasticity: 0.3+Math.random()*0.25, bounceCount: 0
+              status: 'falling', elasticity: 0.35+Math.random()*0.2, bounceCount: 0
             })
           }
         }
       })
       next.forEach(inst => {
         if (!selectedToppings.includes(inst.toppingId) && inst.status !== 'removing') {
-          inst.status = 'removing'; inst.vy = 5.0+Math.random()*2.5
-          inst.vx = (Math.random()-0.5)*6.5; inst.vz = (Math.random()-0.5)*6.5
-          inst.rotVx = (Math.random()-0.5)*30; inst.rotVy = (Math.random()-0.5)*30; inst.rotVz = (Math.random()-0.5)*30
+          // Fly out laterally with upward drift for a smooth dissolve effect
+          inst.status = 'removing'; inst.vy = 3.0+Math.random()*2.0
+          const angle = Math.random() * Math.PI * 2
+          inst.vx = Math.cos(angle) * (4.0+Math.random()*3.0)
+          inst.vz = Math.sin(angle) * (4.0+Math.random()*3.0)
+          inst.rotVx = (Math.random()-0.5)*20; inst.rotVy = (Math.random()-0.5)*20; inst.rotVz = (Math.random()-0.5)*20
         }
       })
       return next
@@ -1031,8 +1067,32 @@ function PhysicsToppings({ type, selectedToppings }: { type: string; selectedTop
   )
 }
 
+// ─── Camera Rig (driven by transitionProgress) ─────────────────────────────────
+function CameraRig({ transitionProgress }: { transitionProgress?: MotionValue<number> | number }) {
+  const { camera } = useThree()
+  useFrame((_, delta) => {
+    let tp = 0
+    if (transitionProgress !== undefined) {
+      if (typeof transitionProgress === 'number') tp = transitionProgress
+      else if (transitionProgress && typeof (transitionProgress as any).get === 'function') tp = (transitionProgress as any).get()
+    }
+    const dt = Math.min(delta, 0.03)
+    const targetZ = THREE.MathUtils.lerp(3.8, 3.0, tp)
+    const targetY = THREE.MathUtils.lerp(1.1, 0.8, tp)
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 6 * dt)
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 6 * dt)
+    camera.lookAt(0, 0.3, 0)
+  })
+  return null
+}
+
 // ─── Interactive Drag Rotation ──────────────────────────────────────────────────
-function InteractiveGroup({ children, rotationOffset }: { children: React.ReactNode; rotationOffset?: MotionValue<number> | number }) {
+function InteractiveGroup({ children, rotationOffset, transitionProgress, explodeProgress }: {
+  children: React.ReactNode
+  rotationOffset?: MotionValue<number> | number
+  transitionProgress?: MotionValue<number> | number
+  explodeProgress?: number
+}) {
   const groupRef = useRef<THREE.Group>(null)
   const { gl } = useThree()
   const rotState = useRef({ x: 0.12, y: 0.0, targetX: 0.12, targetY: 0.0, vx: 0.0, vy: 0.0, isDragging: false, autoSpin: true })
@@ -1054,6 +1114,14 @@ function InteractiveGroup({ children, rotationOffset }: { children: React.ReactN
   useFrame((state, delta) => {
     if (!groupRef.current) return
     const s = rotState.current, dt = Math.min(delta, 0.025)
+
+    // Get transition progress (0 = home, 1 = detail)
+    let tp = 0
+    if (transitionProgress !== undefined) {
+      if (typeof transitionProgress === 'number') tp = transitionProgress
+      else if (transitionProgress && typeof (transitionProgress as any).get === 'function') tp = (transitionProgress as any).get()
+    }
+
     if (s.isDragging) {
       s.x = THREE.MathUtils.lerp(s.x, s.targetX, 15*dt)
       s.y = THREE.MathUtils.lerp(s.y, s.targetY, 15*dt)
@@ -1078,9 +1146,22 @@ function InteractiveGroup({ children, rotationOffset }: { children: React.ReactN
       s.x = THREE.MathUtils.lerp(s.x, s.targetX, 10*dt)
       s.y = THREE.MathUtils.lerp(s.y, s.targetY, 10*dt)
     }
-    groupRef.current.rotation.x = s.x
-    groupRef.current.rotation.y = s.y
-    groupRef.current.position.y = Math.sin(state.clock.elapsedTime*0.8)*0.05
+    // Transition-driven 3D transforms
+    const extraRotateY = tp * (Math.PI / 3)      // 0 → 60°
+    const extraRotateZ = tp * (Math.PI / 12)      // 0 → 15° tilt
+    const modelScale = 1 + tp * 0.4               // 1.0 → 1.4
+
+    // Explode-driven perspective distortion (isometric tilt)
+    const ep = explodeProgress ?? 0
+    const explodeRotateX = ep * 0.35              // tilt back to see between layers
+    const explodeRotateZ = ep * 0.08              // slight Z tilt for depth
+    const explodeScale = 1 + ep * 0.15            // grow slightly during explode
+
+    groupRef.current.rotation.x = s.x + explodeRotateX
+    groupRef.current.rotation.y = s.y + extraRotateY
+    groupRef.current.rotation.z = extraRotateZ + explodeRotateZ
+    groupRef.current.scale.setScalar(modelScale * explodeScale)
+    groupRef.current.position.y = Math.sin(state.clock.elapsedTime*0.8)*0.05 - tp * 0.3
   })
 
   return <group ref={groupRef}>{children}</group>
@@ -1176,7 +1257,9 @@ interface Food3DProps {
   type: 'burger' | 'pizza' | 'sandwich' | 'dessert'
   selectedToppings?: string[]
   rotationOffset?: MotionValue<number> | number
+  transitionProgress?: MotionValue<number> | number
   isExploded?: boolean
+  explodeProgress?: number
   visibleLayers?: Set<string>
   onLayerClick?: (id: string) => void
 }
@@ -1207,6 +1290,7 @@ export function Food3D(props: Food3DProps) {
   const toppingsList = props.selectedToppings ?? []
   const showBox = toppingsList.length > 0
   const exploded = props.isExploded ?? false
+  const explodeProgress = props.explodeProgress ?? (exploded ? 1 : 0)
   const visibleLayers = props.visibleLayers ?? new Set<string>([
     'bottom-bun', 'patty', 'sauce', 'cheese', 'lettuce', 'tomato', 'top-bun'
   ])
@@ -1222,17 +1306,18 @@ export function Food3D(props: Food3DProps) {
       >
         <SceneLights />
         <Environment preset="sunset" environmentIntensity={0.4} />
+        <CameraRig transitionProgress={props.transitionProgress} />
 
-        <InteractiveGroup rotationOffset={props.rotationOffset}>
+        <InteractiveGroup rotationOffset={props.rotationOffset} transitionProgress={props.transitionProgress} explodeProgress={explodeProgress}>
           <group>
             <CardboardBox active={showBox} />
             <WoodPlate />
             <PhysicsToppings type={props.type} selectedToppings={toppingsList} />
 
-            {props.type === 'burger' && <BurgerMemo exploded={exploded} visibleLayers={visibleLayers} onLayerClick={onLayerClick} />}
-            {props.type === 'pizza' && <PizzaMemo exploded={exploded} visibleLayers={visibleLayers} onLayerClick={onLayerClick} />}
-            {props.type === 'sandwich' && <SandwichMemo exploded={exploded} visibleLayers={visibleLayers} onLayerClick={onLayerClick} />}
-            {props.type === 'dessert' && <DessertMemo exploded={exploded} visibleLayers={visibleLayers} onLayerClick={onLayerClick} />}
+            {props.type === 'burger' && <BurgerMemo exploded={exploded} explodeProgress={explodeProgress} visibleLayers={visibleLayers} onLayerClick={onLayerClick} />}
+            {props.type === 'pizza' && <PizzaMemo exploded={exploded} explodeProgress={explodeProgress} visibleLayers={visibleLayers} onLayerClick={onLayerClick} />}
+            {props.type === 'sandwich' && <SandwichMemo exploded={exploded} explodeProgress={explodeProgress} visibleLayers={visibleLayers} onLayerClick={onLayerClick} />}
+            {props.type === 'dessert' && <DessertMemo exploded={exploded} explodeProgress={explodeProgress} visibleLayers={visibleLayers} onLayerClick={onLayerClick} />}
           </group>
         </InteractiveGroup>
       </Canvas>
