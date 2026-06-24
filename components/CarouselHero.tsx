@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useCallback, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { menuItems } from '@/lib/menu-data'
 
@@ -11,166 +12,163 @@ interface CarouselHeroProps {
 
 export function CarouselHero({ onSelectItem }: CarouselHeroProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [dragX, setDragX] = useState(0)
-  const containerRef = useRef<HTMLDivElement>(null)
 
-  const currentItem = menuItems[currentIndex]
-  const rotationY = (dragX / 100) * 45
+  const item = useMemo(() => menuItems[currentIndex], [currentIndex])
 
-  const nextItem = () => {
-    setCurrentIndex((prev) => (prev + 1) % menuItems.length)
-    setDragX(0)
-  }
+  const handlePrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev === 0 ? menuItems.length - 1 : prev - 1))
+  }, [])
 
-  const prevItem = () => {
-    setCurrentIndex((prev) => (prev - 1 + menuItems.length) % menuItems.length)
-    setDragX(0)
-  }
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev === menuItems.length - 1 ? 0 : prev + 1))
+  }, [])
 
-  const handleDragEnd = (_: any, info: any) => {
-    const swipeThreshold = 50
-    if (info.offset.x > swipeThreshold) {
-      prevItem()
-    } else if (info.offset.x < -swipeThreshold) {
-      nextItem()
-    }
-    setDragX(0)
-  }
+  const handleDragEnd = useCallback(
+    (info: any) => {
+      if (info.offset.x > 50) handlePrev()
+      else if (info.offset.x < -50) handleNext()
+    },
+    [handlePrev, handleNext]
+  )
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-[#FBF7F2] to-[#F5EFE7] flex items-center justify-center overflow-hidden pt-20 pb-24">
-      {/* Floating Decorations */}
+    <div className="relative w-full min-h-screen bg-gradient-to-b from-[#FBF7F2] to-[#F5EFEA] flex flex-col items-center justify-center px-4 py-6 md:py-8">
+      {/* Header */}
       <motion.div
-        className="absolute top-20 left-10 text-5xl opacity-40 deco-1"
-        initial={{ y: 0, rotate: 0 }}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="text-center mb-6 md:mb-8 w-full"
       >
-        🍅
-      </motion.div>
-      <motion.div
-        className="absolute top-32 right-12 text-6xl opacity-40 deco-2"
-        initial={{ y: 0, rotate: 0 }}
-      >
-        🌿
-      </motion.div>
-      <motion.div
-        className="absolute bottom-32 left-8 text-5xl opacity-30 deco-3"
-        initial={{ y: 0, rotate: 0 }}
-      >
-        🍕
+        <h1 className="text-2xl md:text-4xl font-bold text-[#1C1008] mb-1">
+          Little Canada
+        </h1>
+        <p className="text-xs md:text-sm text-[#8A7968]">Fresh & Delicious Café</p>
       </motion.div>
 
-      {/* Main Carousel Container */}
-      <div className="flex flex-col items-center gap-8 w-full px-4 max-w-2xl">
-        {/* Item Name */}
-        <motion.h1
-          key={`name-${currentIndex}`}
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.4 }}
-          className="text-4xl md:text-5xl font-bold text-[#1C1008] text-center"
-        >
-          {currentItem.name}
-        </motion.h1>
-
-        {/* Carousel Area */}
-        <motion.div
-          ref={containerRef}
-          drag="x"
-          dragElastic={0.2}
-          onDrag={(_: any, info: any) => {
-            setDragX(info.offset.x)
-          }}
-          onDragEnd={handleDragEnd}
-          className="relative w-full h-72 md:h-96 flex items-center justify-center cursor-grab active:cursor-grabbing"
-        >
-          {/* Pizza Plate with 3D Rotation */}
+      {/* Main Carousel Card */}
+      <motion.div
+        drag="x"
+        dragElastic={0.2}
+        onDragEnd={handleDragEnd}
+        className="relative w-full max-w-sm md:max-w-md mb-6"
+      >
+        <AnimatePresence mode="wait">
           <motion.div
-            key={`plate-${currentIndex}`}
-            initial={{ rotateY: -45, opacity: 0 }}
-            animate={{ rotateY: rotationY, opacity: 1 }}
-            exit={{ rotateY: 45, opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="relative w-64 h-64 md:w-80 md:h-80"
-            style={{
-              perspective: '1000px',
-              transformStyle: 'preserve-3d',
-            }}
+            key={item.id}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.3 }}
+            className="relative bg-white rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden aspect-square"
           >
-            {/* Circular Plate Background */}
-            <div className="absolute inset-0 rounded-full bg-white shadow-2xl border-8 border-[#E87A30] flex items-center justify-center overflow-hidden">
-              {/* Item Image/Emoji */}
-              <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.4 }}
-                className="text-8xl md:text-9xl"
-              >
-                {currentItem.emoji}
-              </motion.div>
-            </div>
-
-            {/* Price Badge */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-              className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-[#E87A30] text-white px-6 py-2 rounded-full font-bold text-lg md:text-xl whitespace-nowrap shadow-lg"
-            >
-              {currentItem.basePrice} ETB
-            </motion.div>
+            <Image
+              src={item.image}
+              alt={item.name}
+              fill
+              className="object-cover"
+              priority
+              sizes="(max-width: 640px) 90vw, (max-width: 768px) 80vw, 500px"
+              quality={85}
+            />
+            {item.popular && (
+              <div className="absolute top-3 md:top-4 right-3 md:right-4 bg-[#E87A30] text-white px-2 md:px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                Popular
+              </div>
+            )}
           </motion.div>
-        </motion.div>
+        </AnimatePresence>
+      </motion.div>
 
-        {/* Navigation Arrows */}
-        <div className="flex gap-8 items-center mt-12">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={prevItem}
-            className="p-3 rounded-full bg-[#E87A30] text-white hover:bg-[#d66a20] transition-colors shadow-lg"
-          >
-            <ChevronLeft size={28} />
-          </motion.button>
-
-          {/* Indicator Dots */}
-          <div className="flex gap-2">
-            {menuItems.map((_, idx) => (
-              <motion.button
-                key={idx}
-                onClick={() => {
-                  setCurrentIndex(idx)
-                  setDragX(0)
-                }}
-                className={`rounded-full transition-all ${
-                  idx === currentIndex
-                    ? 'bg-[#E87A30] w-3 h-3'
-                    : 'bg-[#D4C4B0] w-2 h-2 hover:bg-[#E87A30]'
-                }`}
-                whileHover={{ scale: 1.2 }}
-              />
-            ))}
+      {/* Item Info */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`info-${item.id}`}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -5 }}
+          transition={{ duration: 0.2 }}
+          className="text-center w-full max-w-sm md:max-w-md mb-6"
+        >
+          <h2 className="text-xl md:text-2xl font-bold text-[#1C1008] mb-2">
+            {item.name}
+          </h2>
+          <p className="text-xs md:text-sm text-[#8A7968] mb-3 line-clamp-2">
+            {item.description}
+          </p>
+          <div className="text-2xl md:text-3xl font-bold text-[#E87A30]">
+            {item.basePrice} ETB
           </div>
+        </motion.div>
+      </AnimatePresence>
 
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={nextItem}
-            className="p-3 rounded-full bg-[#E87A30] text-white hover:bg-[#d66a20] transition-colors shadow-lg"
-          >
-            <ChevronRight size={28} />
-          </motion.button>
-        </div>
-
-        {/* Select Item Button */}
+      {/* Navigation */}
+      <div className="flex gap-3 md:gap-4 items-center justify-center mb-6">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => onSelectItem(currentItem.id)}
-          className="mt-8 px-8 py-3 bg-[#E87A30] text-white rounded-full font-bold text-lg hover:bg-[#d66a20] transition-colors shadow-lg"
+          onClick={handlePrev}
+          className="p-2 md:p-3 rounded-full bg-[#E87A30] text-white hover:bg-[#D6671D] transition-colors shadow-lg"
+          aria-label="Previous"
         >
-          View Details & Customize
+          <ChevronLeft size={20} className="md:w-6 md:h-6" />
         </motion.button>
+
+        <div className="flex gap-1.5 flex-wrap justify-center max-w-xs">
+          {menuItems.map((_, idx) => (
+            <motion.button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`rounded-full transition-all ${
+                idx === currentIndex
+                  ? 'bg-[#E87A30] w-2.5 h-2.5 md:w-3 md:h-3'
+                  : 'bg-[#D4BFB0] w-2 h-2 hover:bg-[#C4AFA0]'
+              }`}
+              aria-label={`Go to item ${idx + 1}`}
+            />
+          ))}
+        </div>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleNext}
+          className="p-2 md:p-3 rounded-full bg-[#E87A30] text-white hover:bg-[#D6671D] transition-colors shadow-lg"
+          aria-label="Next"
+        >
+          <ChevronRight size={20} className="md:w-6 md:h-6" />
+        </motion.button>
+      </div>
+
+      {/* CTA Button */}
+      <motion.button
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => onSelectItem(item.id)}
+        className="w-full max-w-sm px-6 py-3 md:py-4 bg-[#E87A30] text-white rounded-2xl font-bold text-base md:text-lg shadow-xl hover:bg-[#D6671D] transition-colors mb-8"
+      >
+        View Details & Customize
+      </motion.button>
+
+      {/* Footer Contact */}
+      <div className="text-center text-xs md:text-sm text-[#8A7968] max-w-sm w-full px-4">
+        <p className="mb-3">⚠️ Please inform us of any allergies</p>
+        <div className="flex gap-2 justify-center">
+          <a
+            href="tel:+251988984865"
+            className="flex-1 px-3 py-2 border-2 border-[#E87A30] text-[#E87A30] rounded-xl font-medium hover:bg-[#FBF7F2] transition-colors text-xs md:text-sm"
+          >
+            📞 Call
+          </a>
+          <a
+            href="https://wa.me/251988984865"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 px-3 py-2 bg-[#E87A30] text-white rounded-xl font-medium hover:bg-[#D6671D] transition-colors text-xs md:text-sm"
+          >
+            💬 WhatsApp
+          </a>
+        </div>
       </div>
     </div>
   )
