@@ -1,229 +1,204 @@
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { PresentationControls, Float } from '@react-three/drei'
+import { useRef, useEffect, memo } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { PresentationControls, Environment, Float } from '@react-three/drei'
 import * as THREE from 'three'
 
 interface Food3DProps {
   type: 'burger' | 'pizza' | 'sandwich' | 'dessert'
-  color: string
   selectedToppings?: string[]
-  autoRotate?: boolean
 }
 
-function BurgerModel({ color, selectedToppings = [] }: Omit<Food3DProps, 'type'> & { type?: string }) {
+function BurgerModel({ selectedToppings = [] }: Omit<Food3DProps, 'type'>) {
   const groupRef = useRef<THREE.Group>(null)
 
   useFrame(() => {
     if (groupRef.current) {
-      groupRef.current.rotation.y += 0.005
+      groupRef.current.rotation.y += 0.008
     }
   })
 
+  // Create a rounded rectangle shape for burger layers
+  const createBunShape = (radius: number) => {
+    const shape = new THREE.Shape()
+    shape.moveTo(radius, 0)
+    shape.quadraticCurveTo(radius, radius, 0, radius)
+    shape.quadraticCurveTo(-radius, radius, -radius, 0)
+    shape.quadraticCurveTo(-radius, -radius, 0, -radius)
+    shape.quadraticCurveTo(radius, -radius, radius, 0)
+    return shape
+  }
+
   return (
-    <group ref={groupRef}>
-      {/* Bun Bottom */}
-      <mesh position={[0, -0.3, 0]}>
-        <capsuleGeometry args={[0.8, 0.3, 4, 8]} />
-        <meshStandardMaterial color="#D2691E" roughness={0.7} />
+    <group ref={groupRef} scale={1.8}>
+      {/* Bottom Bun */}
+      <mesh position={[0, -0.35, 0]}>
+        <sphereGeometry args={[0.75, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.6]} />
+        <meshStandardMaterial 
+          color="#CD853F" 
+          roughness={0.6}
+          metalness={0}
+        />
       </mesh>
 
       {/* Patty */}
-      <mesh position={[0, 0, 0]}>
-        <cylinderGeometry args={[0.75, 0.75, 0.15, 32]} />
-        <meshStandardMaterial color={color} roughness={0.8} />
+      <mesh position={[0, 0.05, 0]}>
+        <cylinderGeometry args={[0.72, 0.72, 0.12, 32]} />
+        <meshStandardMaterial 
+          color="#6B4423"
+          roughness={0.85}
+          metalness={0}
+        />
       </mesh>
 
-      {/* Cheese (if selected) */}
+      {/* Cheese Layer (if selected) */}
       {selectedToppings.includes('cheese') && (
-        <mesh position={[0, 0.1, 0]}>
-          <cylinderGeometry args={[0.75, 0.75, 0.05, 32]} />
-          <meshStandardMaterial color="#FFD700" roughness={0.6} />
+        <mesh position={[0, 0.15, 0]}>
+          <cylinderGeometry args={[0.74, 0.74, 0.04, 32]} />
+          <meshStandardMaterial 
+            color="#FFD700"
+            roughness={0.4}
+            metalness={0.1}
+          />
         </mesh>
       )}
 
-      {/* Lettuce (if selected) */}
+      {/* Lettuce Layer (if selected) */}
       {selectedToppings.includes('lettuce') && (
-        <mesh position={[0, 0.2, 0]}>
-          <cylinderGeometry args={[0.75, 0.75, 0.08, 32]} />
-          <meshStandardMaterial color="#228B22" roughness={0.9} />
+        <mesh position={[0, 0.25, 0]}>
+          <cylinderGeometry args={[0.75, 0.75, 0.06, 32]} />
+          <meshStandardMaterial 
+            color="#2D5016"
+            roughness={0.95}
+            metalness={0}
+          />
         </mesh>
       )}
 
-      {/* Tomato (if selected) */}
+      {/* Tomato Layer (if selected) */}
       {selectedToppings.includes('tomato') && (
-        <mesh position={[0, 0.32, 0]}>
-          <cylinderGeometry args={[0.7, 0.7, 0.1, 32]} />
-          <meshStandardMaterial color="#FF4500" roughness={0.7} />
+        <mesh position={[0, 0.35, 0]}>
+          <cylinderGeometry args={[0.74, 0.74, 0.05, 32]} />
+          <meshStandardMaterial 
+            color="#DC143C"
+            roughness={0.7}
+            metalness={0}
+          />
         </mesh>
       )}
 
-      {/* Bun Top */}
-      <mesh position={[0, 0.5, 0]}>
-        <capsuleGeometry args={[0.8, 0.3, 4, 8]} />
-        <meshStandardMaterial color="#D2691E" roughness={0.7} />
-      </mesh>
-    </group>
-  )
-}
-
-function PizzaModel({ color, selectedToppings = [] }: Omit<Food3DProps, 'type'> & { type?: string }) {
-  const groupRef = useRef<THREE.Group>(null)
-
-  useFrame(() => {
-    if (groupRef.current) {
-      groupRef.current.rotation.z += 0.003
-      groupRef.current.rotation.x = Math.sin(Date.now() * 0.0005) * 0.2
-    }
-  })
-
-  return (
-    <group ref={groupRef}>
-      {/* Pizza Base */}
-      <mesh position={[0, 0, 0]} rotation={[Math.PI * 0.1, 0, 0]}>
-        <cylinderGeometry args={[1.2, 1.2, 0.2, 32]} />
-        <meshStandardMaterial color={color} roughness={0.6} />
-      </mesh>
-
-      {/* Cheese */}
-      <mesh position={[0, 0.11, 0]} rotation={[Math.PI * 0.1, 0, 0]}>
-        <cylinderGeometry args={[1.15, 1.15, 0.08, 32]} />
-        <meshStandardMaterial color="#FFD700" roughness={0.7} />
-      </mesh>
-
-      {/* Toppings - Pepperoni (if selected) */}
+      {/* Pepperoni (if selected) */}
       {selectedToppings.includes('pepperoni') && (
         <>
-          {[...Array(6)].map((_, i) => {
-            const angle = (i / 6) * Math.PI * 2
-            const radius = 0.6
-            return (
-              <mesh key={`pep-${i}`} position={[Math.cos(angle) * radius, 0.2, Math.sin(angle) * radius]}>
-                <cylinderGeometry args={[0.15, 0.15, 0.02, 16]} />
-                <meshStandardMaterial color="#DC143C" roughness={0.5} />
-              </mesh>
-            )
-          })}
+          <mesh position={[-0.3, 0.3, 0.3]}>
+            <cylinderGeometry args={[0.12, 0.12, 0.02, 32]} />
+            <meshStandardMaterial color="#B22222" roughness={0.6} />
+          </mesh>
+          <mesh position={[0.25, 0.32, -0.35]}>
+            <cylinderGeometry args={[0.12, 0.12, 0.02, 32]} />
+            <meshStandardMaterial color="#B22222" roughness={0.6} />
+          </mesh>
         </>
       )}
 
-      {/* Mushrooms (if selected) */}
-      {selectedToppings.includes('mushroom') && (
-        <>
-          {[...Array(4)].map((_, i) => {
-            const angle = (i / 4) * Math.PI * 2 + Math.PI / 8
-            const radius = 0.4
-            return (
-              <mesh key={`mush-${i}`} position={[Math.cos(angle) * radius, 0.2, Math.sin(angle) * radius]}>
-                <sphereGeometry args={[0.12, 16, 16]} />
-                <meshStandardMaterial color="#8B6914" roughness={0.7} />
-              </mesh>
-            )
-          })}
-        </>
-      )}
-
-      {/* Olives (if selected) */}
-      {selectedToppings.includes('olive') && (
-        <>
-          {[...Array(5)].map((_, i) => {
-            const angle = (i / 5) * Math.PI * 2
-            const radius = 0.7
-            return (
-              <mesh key={`olive-${i}`} position={[Math.cos(angle) * radius, 0.2, Math.sin(angle) * radius]}>
-                <sphereGeometry args={[0.1, 16, 16]} />
-                <meshStandardMaterial color="#000000" roughness={0.6} />
-              </mesh>
-            )
-          })}
-        </>
-      )}
-    </group>
-  )
-}
-
-function SandwichModel({ color, selectedToppings = [] }: Omit<Food3DProps, 'type'> & { type?: string }) {
-  const groupRef = useRef<THREE.Group>(null)
-
-  useFrame(() => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += 0.004
-    }
-  })
-
-  return (
-    <group ref={groupRef}>
-      {/* Bottom Bread */}
-      <mesh position={[0, -0.25, -0.2]} scale={[1.2, 0.3, 0.9]}>
-        <boxGeometry />
-        <meshStandardMaterial color="#DAA520" roughness={0.8} />
-      </mesh>
-
-      {/* Filling */}
-      <mesh position={[0, 0, 0]} scale={[1.0, 0.2, 0.8]}>
-        <boxGeometry />
-        <meshStandardMaterial color={color} roughness={0.7} />
-      </mesh>
-
-      {/* Extra filling (if toppings selected) */}
-      {selectedToppings.length > 0 && (
-        <mesh position={[0, 0.15, 0]} scale={[0.95, 0.15, 0.75]}>
-          <boxGeometry />
-          <meshStandardMaterial color="#FF6347" roughness={0.7} />
-        </mesh>
-      )}
-
-      {/* Top Bread */}
-      <mesh position={[0, 0.25, -0.2]} scale={[1.2, 0.3, 0.9]}>
-        <boxGeometry />
-        <meshStandardMaterial color="#DAA520" roughness={0.8} />
+      {/* Top Bun */}
+      <mesh position={[0, 0.55, 0]}>
+        <sphereGeometry args={[0.75, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5]} />
+        <meshStandardMaterial 
+          color="#D2691E"
+          roughness={0.65}
+          metalness={0}
+        />
       </mesh>
     </group>
   )
 }
 
-function DessertModel({ color, selectedToppings = [] }: Omit<Food3DProps, 'type'> & { type?: string }) {
+function PizzaModel({ selectedToppings = [] }: Omit<Food3DProps, 'type'>) {
   const groupRef = useRef<THREE.Group>(null)
 
   useFrame(() => {
     if (groupRef.current) {
       groupRef.current.rotation.y += 0.006
-      groupRef.current.position.y = Math.sin(Date.now() * 0.0008) * 0.1
+      groupRef.current.rotation.x = Math.sin(Date.now() * 0.001) * 0.2
     }
   })
 
   return (
-    <group ref={groupRef}>
-      {/* Main dessert base */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[0.7, 32, 32]} />
-        <meshStandardMaterial color={color} roughness={0.6} metalness={0.2} />
+    <group ref={groupRef} scale={2}>
+      {/* Crust */}
+      <mesh position={[0, 0, 0]} rotation={[Math.PI / 2.5, 0, 0]}>
+        <cylinderGeometry args={[0.9, 0.9, 0.08, 64]} />
+        <meshStandardMaterial 
+          color="#CD853F"
+          roughness={0.7}
+          metalness={0}
+        />
       </mesh>
 
-      {/* Whipped cream (if selected) */}
-      {selectedToppings.includes('cream') && (
-        <mesh position={[0, 0.8, 0]} scale={[0.6, 0.8, 0.6]}>
-          <coneGeometry args={[0.5, 0.8, 32]} />
-          <meshStandardMaterial color="#FFFFFF" roughness={0.8} />
-        </mesh>
-      )}
+      {/* Sauce/Base */}
+      <mesh position={[0, 0.02, 0]} rotation={[Math.PI / 2.5, 0, 0]}>
+        <cylinderGeometry args={[0.88, 0.88, 0.02, 64]} />
+        <meshStandardMaterial 
+          color="#C1272D"
+          roughness={0.5}
+          metalness={0}
+        />
+      </mesh>
 
-      {/* Cherry on top (if selected) */}
-      {selectedToppings.includes('cherry') && (
-        <mesh position={[0, 1.2, 0]}>
-          <sphereGeometry args={[0.15, 16, 16]} />
-          <meshStandardMaterial color="#DC143C" roughness={0.6} />
-        </mesh>
-      )}
+      {/* Cheese */}
+      <mesh position={[0, 0.05, 0]} rotation={[Math.PI / 2.5, 0, 0]}>
+        <cylinderGeometry args={[0.87, 0.87, 0.03, 64]} />
+        <meshStandardMaterial 
+          color="#FFD700"
+          roughness={0.45}
+          metalness={0.05}
+        />
+      </mesh>
 
-      {/* Chocolate drizzle (if selected) */}
-      {selectedToppings.includes('chocolate') && (
+      {/* Pepperoni (if selected) */}
+      {selectedToppings.includes('pepperoni') && (
         <>
-          {[...Array(3)].map((_, i) => (
-            <mesh key={`choc-${i}`} position={[-0.3 + i * 0.3, 0.3, -0.7]} rotation={[0, 0, Math.PI / 6]}>
-              <cylinderGeometry args={[0.05, 0.05, 0.6, 8]} />
+          {[
+            [-0.4, -0.3, 0.15],
+            [0.3, 0.4, 0.15],
+            [-0.2, 0.2, 0.15],
+            [0.5, -0.15, 0.15],
+          ].map((pos, i) => (
+            <mesh key={`pep-${i}`} position={pos as [number, number, number]}>
+              <cylinderGeometry args={[0.08, 0.08, 0.02, 32]} />
+              <meshStandardMaterial color="#B22222" roughness={0.6} />
+            </mesh>
+          ))}
+        </>
+      )}
+
+      {/* Mushroom (if selected) */}
+      {selectedToppings.includes('mushroom') && (
+        <>
+          {[
+            [0.2, -0.4, 0.15],
+            [-0.35, 0.35, 0.15],
+          ].map((pos, i) => (
+            <mesh key={`mush-${i}`} position={pos as [number, number, number]}>
+              <sphereGeometry args={[0.07, 16, 16]} />
               <meshStandardMaterial color="#8B4513" roughness={0.8} />
+            </mesh>
+          ))}
+        </>
+      )}
+
+      {/* Olive (if selected) */}
+      {selectedToppings.includes('olive') && (
+        <>
+          {[
+            [0.5, 0.2, 0.15],
+            [-0.3, -0.45, 0.15],
+          ].map((pos, i) => (
+            <mesh key={`olive-${i}`} position={pos as [number, number, number]}>
+              <sphereGeometry args={[0.06, 16, 16]} />
+              <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
             </mesh>
           ))}
         </>
@@ -232,30 +207,150 @@ function DessertModel({ color, selectedToppings = [] }: Omit<Food3DProps, 'type'
   )
 }
 
-function FoodModel({ type, color, selectedToppings }: Food3DProps) {
-  if (type === 'burger') return <BurgerModel color={color} selectedToppings={selectedToppings} />
-  if (type === 'pizza') return <PizzaModel color={color} selectedToppings={selectedToppings} />
-  if (type === 'sandwich') return <SandwichModel color={color} selectedToppings={selectedToppings} />
-  if (type === 'dessert') return <DessertModel color={color} selectedToppings={selectedToppings} />
-  return null
+function SandwichModel({ selectedToppings = [] }: Omit<Food3DProps, 'type'>) {
+  const groupRef = useRef<THREE.Group>(null)
+
+  useFrame(() => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += 0.007
+      groupRef.current.rotation.z = Math.sin(Date.now() * 0.0008) * 0.15
+    }
+  })
+
+  return (
+    <group ref={groupRef} scale={1.6}>
+      {/* Bottom Bread */}
+      <mesh position={[0, -0.2, 0]}>
+        <boxGeometry args={[0.8, 0.15, 0.6]} />
+        <meshStandardMaterial 
+          color="#D2B48C"
+          roughness={0.6}
+          metalness={0}
+        />
+      </mesh>
+
+      {/* Lettuce */}
+      <mesh position={[0, 0.05, 0]}>
+        <boxGeometry args={[0.85, 0.04, 0.65]} />
+        <meshStandardMaterial 
+          color="#2D5016"
+          roughness={0.9}
+          metalness={0}
+        />
+      </mesh>
+
+      {/* Filling (Tuna/Cheese) */}
+      <mesh position={[0, 0.15, 0]}>
+        <boxGeometry args={[0.75, 0.08, 0.55]} />
+        <meshStandardMaterial 
+          color="#8B7355"
+          roughness={0.7}
+          metalness={0}
+        />
+      </mesh>
+
+      {/* Top Bread */}
+      <mesh position={[0, 0.3, 0]}>
+        <boxGeometry args={[0.8, 0.15, 0.6]} />
+        <meshStandardMaterial 
+          color="#D2A679"
+          roughness={0.65}
+          metalness={0}
+        />
+      </mesh>
+    </group>
+  )
 }
 
-export function Food3D({ type, color, selectedToppings = [] }: Food3DProps) {
-  return (
-    <Canvas camera={{ position: [0, 0, 3.5], fov: 45 }}>
-      <ambientLight intensity={0.8} />
-      <directionalLight position={[5, 5, 5]} intensity={1} />
-      <pointLight position={[-5, 5, 5]} intensity={0.5} color="#FFF" />
+function DessertModel({ selectedToppings = [] }: Omit<Food3DProps, 'type'>) {
+  const groupRef = useRef<THREE.Group>(null)
 
+  useFrame(() => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += 0.01
+      groupRef.current.rotation.x = Math.sin(Date.now() * 0.0012) * 0.1
+    }
+  })
+
+  return (
+    <group ref={groupRef} scale={1.8}>
+      {/* Ice cream scoops */}
+      <mesh position={[0, 0.2, 0]}>
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshStandardMaterial 
+          color="#F5DEB3"
+          roughness={0.3}
+          metalness={0}
+        />
+      </mesh>
+
+      <mesh position={[0, 0.7, 0]}>
+        <sphereGeometry args={[0.45, 32, 32]} />
+        <meshStandardMaterial 
+          color="#8B4513"
+          roughness={0.4}
+          metalness={0}
+        />
+      </mesh>
+
+      {/* Cone */}
+      <mesh position={[0, -0.3, 0]}>
+        <coneGeometry args={[0.45, 0.8, 32]} />
+        <meshStandardMaterial 
+          color="#CD853F"
+          roughness={0.65}
+          metalness={0}
+        />
+      </mesh>
+
+      {/* Chocolate drizzle (if selected) */}
+      {selectedToppings.includes('chocolate') && (
+        <mesh position={[0, 0.5, 0]}>
+          <torusGeometry args={[0.4, 0.03, 8, 100]} />
+          <meshStandardMaterial 
+            color="#3D2817"
+            roughness={0.5}
+          />
+        </mesh>
+      )}
+    </group>
+  )
+}
+
+const BurgerMemo = memo(BurgerModel)
+const PizzaMemo = memo(PizzaModel)
+const SandwichMemo = memo(SandwichModel)
+const DessertMemo = memo(DessertModel)
+
+export function Food3D({ type, selectedToppings = [] }: Food3DProps) {
+  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio, 1.5) : 1
+  
+  return (
+    <Canvas
+      camera={{ position: [0, 0, 3.5], fov: 50 }}
+      style={{ width: '100%', height: '100%' }}
+      dpr={dpr}
+    >
+      {/* Professional Lighting */}
+      <ambientLight intensity={0.8} />
+      <directionalLight position={[5, 10, 7]} intensity={1.2} castShadow />
+      <directionalLight position={[-5, 5, -5]} intensity={0.5} />
+      <pointLight position={[0, 5, 10]} intensity={0.6} />
+
+      {/* Environment for realistic reflections */}
+      <Environment preset="studio" />
+
+      {/* Render based on food type */}
       <PresentationControls
         global
-        rotation={[0, 0, 0]}
-        polar={[0, 0]}
-        azimuth={[-Math.PI / 4, Math.PI / 4]}
+        rotation={[0.13, 0.1, 0]}
+        polar={[0, Math.PI * 0.5]}
+        azimuth={[-Math.PI * 0.5, Math.PI * 0.5]}
       >
-        <Float speed={1} rotationIntensity={0} floatIntensity={0.2}>
-          <FoodModel type={type} color={color} selectedToppings={selectedToppings} />
-        </Float>
+        {type === 'burger' && <BurgerMemo selectedToppings={selectedToppings} />}
+        {type === 'pizza' && <PizzaMemo selectedToppings={selectedToppings} />}
+        {type === 'sandwich' && <SandwichMemo selectedToppings={selectedToppings} />}
+        {type === 'dessert' && <DessertMemo selectedToppings={selectedToppings} />}
       </PresentationControls>
     </Canvas>
   )
