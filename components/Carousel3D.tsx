@@ -45,6 +45,8 @@ export function Carousel3D({ onSelectItem }: Carousel3DProps) {
 
   const handleDragEnd = useCallback(
     (info: any) => {
+      if (!info || !info.offset) return
+      
       if (Math.abs(info.offset.x) > 50) {
         if (info.offset.x > 0) handlePrev()
         else handleNext()
