@@ -14,7 +14,7 @@ export function useScrollTransition() {
   const transitionProgress = useMotionValue(0)
   const isAnimating = useRef(false)
   const gestureState = useRef({
-    mode: 'undecided' as 'undecided' | 'vertical' | 'horizontal' | 'tap',
+    mode: 'undecided' as 'undecided' | 'vertical' | 'tap',
     startX: 0,
     startY: 0,
     lastY: 0,
@@ -41,7 +41,6 @@ export function useScrollTransition() {
     s.lastY = e.clientY
     s.tracking = true
     transitionProgress.stop()
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
   }, [transitionProgress])
 
   const handlePointerMove = useCallback((e: PointerEvent<HTMLDivElement>) => {
@@ -49,17 +48,18 @@ export function useScrollTransition() {
     if (!s.tracking || isAnimating.current) return
 
     const dx = e.clientX - s.startX
-    const dy = s.startY - e.clientY // invert: swipe up = positive
+    const dy = s.startY - e.clientY
 
-    // Resolve gesture direction
     if (s.mode === 'undecided') {
       const absDx = Math.abs(dx)
       const absDy = Math.abs(dy)
       if (absDx < 8 && absDy < 8) return
-      if (absDy > absDx * 1.2 && absDy > 10) {
+      if (absDy > absDx * 1.5 && absDy > 15) {
         s.mode = 'vertical'
-      } else if (absDx > absDy * 1.2 && absDx > 10) {
-        s.mode = 'horizontal'
+      } else {
+        // Horizontal or ambiguous — release, let framer-motion drag handle it
+        s.tracking = false
+        s.mode = 'undecided'
       }
       return
     }

@@ -236,21 +236,26 @@ function BurgerModel({ exploded, explodeProgress, visibleLayers, onLayerClick }:
   }, [onLayerClick])
 
   return (
-    <group ref={groupRef} scale={1.7}>
+    <group ref={groupRef} scale={1.1}>
       {/* Bottom Bun */}
       {visibleLayers.has('bottom-bun') && (
         <group ref={el => { if (el) refs.current['bottom-bun'] = el }} position={[0, -0.42, 0]} onClick={handleClick('bottom-bun')}>
           <mesh geometry={geometries.botBun}>
             <meshPhysicalMaterial color="#C88B3E" roughness={0.62} clearcoat={0.18} clearcoatRoughness={0.35} envMapIntensity={0.75} />
           </mesh>
-          {/* Sesame seeds on bottom bun */}
+          {/* Toasted sesame seeds on bottom */}
           {[0,1,2,3,4,5].map(i => (
             <mesh key={`seed-b-${i}`} position={[Math.cos(i*Math.PI/3)*0.38, -0.28, Math.sin(i*Math.PI/3)*0.38]}
               rotation={[0.3, i*0.5, 0.2]}>
-              <sphereGeometry args={[0.02, 6, 6]} />
-              <meshPhysicalMaterial color="#F5DEB3" roughness={0.3} clearcoat={0.2} />
+              <sphereGeometry args={[0.022, 6, 6]} />
+              <meshPhysicalMaterial color="#E8D5A0" roughness={0.25} clearcoat={0.25} metalness={0.08} />
             </mesh>
           ))}
+          {/* Butter glaze on bottom bun */}
+          <mesh position={[0, -0.35, 0]} rotation={[0, 0, 0]}>
+            <cylinderGeometry args={[0.65, 0.65, 0.005, 16]} />
+            <meshPhysicalMaterial color="#FFE082" roughness={0.08} clearcoat={0.9} transparent opacity={0.25} />
+          </mesh>
         </group>
       )}
 
@@ -267,6 +272,16 @@ function BurgerModel({ exploded, explodeProgress, visibleLayers, onLayerClick }:
               <meshStandardMaterial color="#1A0804" roughness={1} />
             </mesh>
           ))}
+          {/* Charred edge detail */}
+          {Array.from({ length: 8 }).map((_, i) => {
+            const angle = (i / 8) * Math.PI * 2
+            return (
+              <mesh key={`char-${i}`} position={[Math.cos(angle)*0.55, 0.082, Math.sin(angle)*0.55]}>
+                <sphereGeometry args={[0.015 + Math.random()*0.01, 4, 4]} />
+                <meshStandardMaterial color="#1A0804" roughness={0.95} />
+              </mesh>
+            )
+          })}
           {/* Juicy grease sheen */}
           <mesh position={[0.15, 0.082, 0.2]}>
             <circleGeometry args={[0.06, 16]} />
@@ -323,13 +338,13 @@ function BurgerModel({ exploded, explodeProgress, visibleLayers, onLayerClick }:
             <meshPhysicalMaterial color="#2E7D32" roughness={0.68} clearcoat={0.18} side={THREE.DoubleSide} envMapIntensity={0.4} />
           </mesh>
           {/* Ruffled edge frills */}
-          {Array.from({ length: 6 }).map((_, i) => {
-            const angle = (i / 6) * Math.PI * 2
-            const r = 0.5 + Math.random() * 0.15
+          {Array.from({ length: 8 }).map((_, i) => {
+            const angle = (i / 8) * Math.PI * 2
+            const r = 0.5 + Math.random() * 0.18
             return (
               <mesh key={`frill-${i}`} position={[Math.cos(angle)*r, 0.02, Math.sin(angle)*r]}
                 rotation={[Math.random()*0.6 - 0.3, angle, Math.random()*0.4]}>
-                <sphereGeometry args={[0.06 + Math.random()*0.03, 6, 4]} />
+                <sphereGeometry args={[0.07 + Math.random()*0.04, 6, 4]} />
                 <meshPhysicalMaterial color={i % 2 === 0 ? "#388E3C" : "#43A047"} roughness={0.7} side={THREE.DoubleSide} transparent opacity={0.92} />
               </mesh>
             )
@@ -351,7 +366,7 @@ function BurgerModel({ exploded, explodeProgress, visibleLayers, onLayerClick }:
           {/* Seeds */}
           {[0.2, -0.18, 0.12, -0.28, 0.05].map((x, i) => (
             <mesh key={`seed-${i}`} position={[x, 0.035, (i % 2 === 0 ? 0.15 : -0.15)]}>
-              <sphereGeometry args={[0.01, 6, 6]} />
+              <sphereGeometry args={[0.012, 6, 6]} />
               <meshPhysicalMaterial color="#F9A825" roughness={0.15} clearcoat={0.4} />
             </mesh>
           ))}
@@ -365,22 +380,22 @@ function BurgerModel({ exploded, explodeProgress, visibleLayers, onLayerClick }:
             <meshPhysicalMaterial color="#D4943A" roughness={0.5} clearcoat={0.3} clearcoatRoughness={0.25} envMapIntensity={1.0} />
           </mesh>
           {/* Sesame seeds on top */}
-          {Array.from({ length: 12 }).map((_, i) => {
-            const angle = (i / 12) * Math.PI * 2
-            const r = 0.25 + (i % 3) * 0.08
+          {Array.from({ length: 14 }).map((_, i) => {
+            const angle = (i / 14) * Math.PI * 2
+            const r = 0.22 + (i % 3) * 0.1
             return (
               <mesh key={`seed-t-${i}`}
-                position={[Math.cos(angle)*r, 0.13 + Math.sin(angle*3)*0.02, Math.sin(angle)*r]}
+                position={[Math.cos(angle)*r, 0.14 + Math.sin(angle*3)*0.02, Math.sin(angle)*r]}
                 rotation={[0.4 + Math.random()*0.3, angle, 0.1]}>
-                <sphereGeometry args={[0.022, 6, 6]} />
+                <sphereGeometry args={[0.024, 6, 6]} />
                 <meshPhysicalMaterial color="#FFF8DC" roughness={0.25} clearcoat={0.35} metalness={0.05} />
               </mesh>
             )
           })}
           {/* Bun glaze highlight */}
           <mesh position={[0, 0.18, 0.15]} rotation={[0.5, 0, 0]}>
-            <circleGeometry args={[0.18, 24]} />
-            <meshPhysicalMaterial color="#E8A840" roughness={0.1} clearcoat={0.9} transparent opacity={0.3} />
+            <circleGeometry args={[0.2, 24]} />
+            <meshPhysicalMaterial color="#E8A840" roughness={0.1} clearcoat={0.9} transparent opacity={0.35} />
           </mesh>
         </group>
       )}
@@ -427,7 +442,7 @@ function PizzaModel({ exploded, explodeProgress, visibleLayers, onLayerClick }: 
   }, [onLayerClick])
 
   return (
-    <group ref={groupRef} scale={1.85}>
+    <group ref={groupRef} scale={1.15}>
       {visibleLayers.has('crust') && (
         <group ref={el => { if (el) refs.current['crust'] = el }} position={[0, 0.02, 0]} onClick={handleClick('crust')}>
           {/* Puffy crust ring */}
@@ -435,12 +450,12 @@ function PizzaModel({ exploded, explodeProgress, visibleLayers, onLayerClick }: 
             <meshPhysicalMaterial color="#C47A3A" roughness={0.72} clearcoat={0.12} envMapIntensity={0.5} />
           </mesh>
           {/* Charred leopard spots on crust */}
-          {Array.from({ length: 6 }).map((_, i) => {
-            const angle = (i / 6) * Math.PI * 2 + 0.15
+          {Array.from({ length: 10 }).map((_, i) => {
+            const angle = (i / 10) * Math.PI * 2 + 0.15
             const r = 0.88
             return (
               <mesh key={`char-${i}`} position={[Math.cos(angle)*r, 0.05, Math.sin(angle)*r]}>
-                <sphereGeometry args={[0.025 + Math.random()*0.02, 6, 6]} />
+                <sphereGeometry args={[0.03 + Math.random()*0.025, 6, 6]} />
                 <meshStandardMaterial color="#3A1505" roughness={0.95} />
               </mesh>
             )
@@ -451,11 +466,11 @@ function PizzaModel({ exploded, explodeProgress, visibleLayers, onLayerClick }: 
             <meshPhysicalMaterial color="#E0A868" roughness={0.68} clearcoat={0.08} envMapIntensity={0.4} />
           </mesh>
           {/* Flour dusting */}
-          {Array.from({ length: 6 }).map((_, i) => {
-            const angle = i * 1.1
+          {Array.from({ length: 8 }).map((_, i) => {
+            const angle = i * 0.9
             return (
               <mesh key={`flour-${i}`} position={[Math.cos(angle)*0.5, 0.035, Math.sin(angle)*0.5]}>
-                <circleGeometry args={[0.04, 12]} />
+                <circleGeometry args={[0.045, 12]} />
                 <meshStandardMaterial color="#F5F0E0" roughness={0.9} transparent opacity={0.4} />
               </mesh>
             )
@@ -470,13 +485,23 @@ function PizzaModel({ exploded, explodeProgress, visibleLayers, onLayerClick }: 
             <meshPhysicalMaterial color="#B71C1C" roughness={0.32} clearcoat={0.35} envMapIntensity={0.65} />
           </mesh>
           {/* Sauce texture bumps */}
-          {Array.from({ length: 8 }).map((_, i) => {
-            const angle = i * 0.8
+          {Array.from({ length: 10 }).map((_, i) => {
+            const angle = i * 0.65
             const r = 0.2 + Math.random() * 0.5
             return (
               <mesh key={`sauce-${i}`} position={[Math.cos(angle)*r, 0.012, Math.sin(angle)*r]}>
-                <sphereGeometry args={[0.04 + Math.random()*0.03, 8, 6]} />
+                <sphereGeometry args={[0.04 + Math.random()*0.035, 8, 6]} />
                 <meshPhysicalMaterial color="#C62828" roughness={0.28} clearcoat={0.3} />
+              </mesh>
+            )
+          })}
+          {/* Herb flecks in sauce */}
+          {Array.from({ length: 6 }).map((_, i) => {
+            const angle = i * 1.2
+            return (
+              <mesh key={`herb-${i}`} position={[Math.cos(angle)*0.4, 0.014, Math.sin(angle)*0.4]} rotation={[Math.PI/2, angle, 0]}>
+                <planeGeometry args={[0.03, 0.01]} />
+                <meshStandardMaterial color="#2E7D32" roughness={0.8} transparent opacity={0.6} />
               </mesh>
             )
           })}
@@ -490,23 +515,33 @@ function PizzaModel({ exploded, explodeProgress, visibleLayers, onLayerClick }: 
             <meshPhysicalMaterial color="#FFF9C4" roughness={0.18} clearcoat={0.65} clearcoatRoughness={0.08} envMapIntensity={1.0} />
           </mesh>
           {/* Melted cheese bubbles */}
-          {Array.from({ length: 8 }).map((_, i) => {
-            const angle = (i / 8) * Math.PI * 2
+          {Array.from({ length: 10 }).map((_, i) => {
+            const angle = (i / 10) * Math.PI * 2
             const r = 0.15 + Math.random() * 0.55
             return (
               <mesh key={`bubble-${i}`} position={[Math.cos(angle)*r, 0.018, Math.sin(angle)*r]}>
-                <sphereGeometry args={[0.02 + Math.random()*0.025, 8, 8]} />
+                <sphereGeometry args={[0.025 + Math.random()*0.03, 8, 8]} />
                 <meshPhysicalMaterial color={i % 3 === 0 ? "#FFE082" : "#FFF9C4"} roughness={0.12} clearcoat={0.75} />
               </mesh>
             )
           })}
           {/* Browned cheese spots */}
-          {[0.3, -0.2, 0.45, -0.4].map((x, i) => (
+          {[0.3, -0.2, 0.45, -0.4, 0.1, -0.35].map((x, i) => (
             <mesh key={`brown-${i}`} position={[x, 0.02, (i%2===0?0.3:-0.3)]}>
-              <circleGeometry args={[0.05, 12]} />
+              <circleGeometry args={[0.06, 12]} />
               <meshPhysicalMaterial color="#D4A030" roughness={0.25} clearcoat={0.5} transparent opacity={0.7} />
             </mesh>
           ))}
+          {/* Cheese pull strings at edges */}
+          {Array.from({ length: 4 }).map((_, i) => {
+            const angle = (i / 4) * Math.PI * 2 + 0.5
+            return (
+              <mesh key={`pull-${i}`} position={[Math.cos(angle)*0.72, 0.01, Math.sin(angle)*0.72]} rotation={[0, angle, Math.PI/6]}>
+                <cylinderGeometry args={[0.008, 0.012, 0.12, 6]} />
+                <meshPhysicalMaterial color="#FFE082" roughness={0.15} clearcoat={0.6} transparent opacity={0.7} />
+              </mesh>
+            )
+          })}
         </group>
       )}
 
@@ -516,7 +551,7 @@ function PizzaModel({ exploded, explodeProgress, visibleLayers, onLayerClick }: 
           {Array.from({ length: 8 }).map((_, i) => {
             const angle = (i / 8) * Math.PI * 2 + 0.4
             const r = 0.2 + (i % 2) * 0.25
-            const cupped = new THREE.CylinderGeometry(0.075, 0.075, 0.012, 10)
+            const cupped = new THREE.CylinderGeometry(0.08, 0.08, 0.014, 10)
             const cuppedPos = cupped.attributes.position
             for (let j = 0; j < cuppedPos.count; j++) {
               const v = new THREE.Vector3().fromBufferAttribute(cuppedPos, j)
@@ -531,12 +566,17 @@ function PizzaModel({ exploded, explodeProgress, visibleLayers, onLayerClick }: 
                   <meshPhysicalMaterial color="#9B1B18" roughness={0.28} clearcoat={0.45} envMapIntensity={0.6} />
                 </mesh>
                 {/* Fat speckles on pepperoni */}
-                {[0.02, -0.015, 0.01].map((dx, j) => (
-                  <mesh key={j} position={[dx, 0.008, dx*0.7]}>
-                    <sphereGeometry args={[0.008 + j*0.002, 6, 6]} />
+                {[0.025, -0.018, 0.012].map((dx, j) => (
+                  <mesh key={j} position={[dx, 0.009, dx*0.7]}>
+                    <sphereGeometry args={[0.01 + j*0.003, 6, 6]} />
                     <meshPhysicalMaterial color="#E8706A" roughness={0.15} clearcoat={0.3} />
                   </mesh>
                 ))}
+                {/* Grease pooling around pepperoni */}
+                <mesh position={[0, 0.005, 0]}>
+                  <cylinderGeometry args={[0.085, 0.085, 0.002, 10]} />
+                  <meshPhysicalMaterial color="#8E1F18" roughness={0.08} clearcoat={0.9} transparent opacity={0.3} />
+                </mesh>
               </group>
             )
           })}
@@ -561,7 +601,7 @@ function SandwichModel({ exploded, explodeProgress, visibleLayers, onLayerClick 
     })
   }, [explodeProgress, layers])
 
-  const s = 1.6
+  const s = 1.0
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.03)
@@ -637,12 +677,23 @@ function SandwichModel({ exploded, explodeProgress, visibleLayers, onLayerClick 
           <RoundedBox args={[1.4, 0.18, 0.9]} radius={0.06}>
             <meshPhysicalMaterial color="#D69C65" roughness={0.6} clearcoat={0.22} envMapIntensity={0.6} />
           </RoundedBox>
-          {[0,1,2,3,4,5].map(i => (
+          {/* Toasted sesame seeds on top */}
+          {Array.from({ length: 10 }).map((_, i) => (
             <mesh key={i} position={[(Math.random()-0.5)*1.0, 0.1, (Math.random()-0.5)*0.6]}>
-              <sphereGeometry args={[0.02, 6, 6]} />
-              <meshPhysicalMaterial color="#FFF1C4" roughness={0.3} clearcoat={0.2} />
+              <sphereGeometry args={[0.022, 6, 6]} />
+              <meshPhysicalMaterial color="#FFF1C4" roughness={0.3} clearcoat={0.2} metalness={0.05} />
             </mesh>
           ))}
+          {/* Toasted crust edge detail */}
+          {Array.from({ length: 6 }).map((_, i) => {
+            const x = (i - 2.5) * 0.25
+            return (
+              <mesh key={`crust-${i}`} position={[x, 0.09, 0.45]}>
+                <sphereGeometry args={[0.015, 4, 4]} />
+                <meshStandardMaterial color="#B8860B" roughness={0.7} />
+              </mesh>
+            )
+          })}
         </group>
       )}
     </group>
@@ -664,7 +715,7 @@ function DessertModel({ exploded, explodeProgress, visibleLayers, onLayerClick }
     })
   }, [explodeProgress, layers])
 
-  const s = 1.75
+  const s = 1.1
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.03)
@@ -691,42 +742,65 @@ function DessertModel({ exploded, explodeProgress, visibleLayers, onLayerClick }
             <coneGeometry args={[0.42, 0.9, 10]} />
             <meshPhysicalMaterial color="#C17F38" roughness={0.6} clearcoat={0.15} />
           </mesh>
+          {/* Waffle cone grid pattern */}
           {[-0.2, 0, 0.2].map((y, i) => (
             <mesh key={i} position={[0, y, 0]} rotation={[Math.PI/2, 0, i*0.5]}>
-              <torusGeometry args={[0.22 + i*0.08, 0.006, 4, 12]} />
+              <torusGeometry args={[0.22 + i*0.08, 0.008, 4, 12]} />
               <meshStandardMaterial color="#8E541E" roughness={0.75} />
             </mesh>
           ))}
+          {/* Cone rim detail */}
+          <mesh position={[0, 0.0, 0]} rotation={[Math.PI/2, 0, 0]}>
+            <torusGeometry args={[0.42, 0.015, 6, 16]} />
+            <meshPhysicalMaterial color="#A66B2A" roughness={0.5} clearcoat={0.2} />
+          </mesh>
         </group>
       )}
 
       {visibleLayers.has('scoop1') && (
         <group ref={el => { if (el) refs.current['scoop1'] = el }} position={[0, 0.15, 0]} onClick={handleClick('scoop1')}>
           <mesh>
-            <sphereGeometry args={[0.48, 12, 12]} />
+            <sphereGeometry args={[0.48, 14, 14]} />
             <meshPhysicalMaterial color="#FDFBF7" roughness={0.5} clearcoat={0.3} clearcoatRoughness={0.2} envMapIntensity={1.0} />
           </mesh>
           {/* Vanilla bean specks */}
-          {[0,1,2,3,4].map(i => (
-            <mesh key={`speck-${i}`} position={[Math.cos(i*1.3)*0.35, 0.1, Math.sin(i*1.3)*0.35]}>
-              <sphereGeometry args={[0.008, 4, 4]} />
+          {Array.from({ length: 8 }).map((_, i) => (
+            <mesh key={`speck-${i}`} position={[Math.cos(i*0.8)*0.35, 0.1, Math.sin(i*0.8)*0.35]}>
+              <sphereGeometry args={[0.01, 4, 4]} />
               <meshStandardMaterial color="#2C1810" roughness={0.8} />
             </mesh>
           ))}
+          {/* Cream swirl ridges */}
+          {Array.from({ length: 6 }).map((_, i) => {
+            const angle = (i / 6) * Math.PI * 2
+            return (
+              <mesh key={`ridge-${i}`} position={[Math.cos(angle)*0.3, 0.15, Math.sin(angle)*0.3]} rotation={[0, angle, Math.PI/4]}>
+                <cylinderGeometry args={[0.008, 0.012, 0.15, 6]} />
+                <meshPhysicalMaterial color="#FFF8E1" roughness={0.4} clearcoat={0.3} transparent opacity={0.6} />
+              </mesh>
+            )
+          })}
         </group>
       )}
 
       {visibleLayers.has('scoop2') && (
         <group ref={el => { if (el) refs.current['scoop2'] = el }} position={[0, 0.62, 0]} onClick={handleClick('scoop2')}>
           <mesh>
-            <sphereGeometry args={[0.42, 12, 12]} />
+            <sphereGeometry args={[0.42, 14, 14]} />
             <meshPhysicalMaterial color="#3E2723" roughness={0.55} clearcoat={0.35} clearcoatRoughness={0.15} envMapIntensity={0.9} />
           </mesh>
           {/* Chocolate drizzle */}
-          {[0,1,2].map(i => (
-            <mesh key={`drizzle-${i}`} position={[Math.cos(i*2)*0.25, 0.2, Math.sin(i*2)*0.25]} rotation={[0.3, i, 0]}>
-              <torusGeometry args={[0.12, 0.015, 4, 10, Math.PI]} />
+          {[0,1,2,3].map(i => (
+            <mesh key={`drizzle-${i}`} position={[Math.cos(i*1.8)*0.25, 0.2, Math.sin(i*1.8)*0.25]} rotation={[0.3, i, 0]}>
+              <torusGeometry args={[0.12, 0.018, 4, 10, Math.PI]} />
               <meshPhysicalMaterial color="#1A0A04" roughness={0.3} clearcoat={0.5} />
+            </mesh>
+          ))}
+          {/* Chocolate chunks */}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <mesh key={`chunk-${i}`} position={[Math.cos(i*1.5)*0.2, 0.25, Math.sin(i*1.5)*0.2]} rotation={[Math.random(), Math.random(), 0]}>
+              <boxGeometry args={[0.04, 0.03, 0.025]} />
+              <meshPhysicalMaterial color="#4E342E" roughness={0.4} clearcoat={0.2} />
             </mesh>
           ))}
         </group>
@@ -735,13 +809,29 @@ function DessertModel({ exploded, explodeProgress, visibleLayers, onLayerClick }
       {visibleLayers.has('topping') && (
         <group ref={el => { if (el) refs.current['topping'] = el }} position={[0, 1.0, 0]} onClick={handleClick('topping')}>
           <mesh>
-            <sphereGeometry args={[0.12, 8, 8]} />
+            <sphereGeometry args={[0.14, 10, 10]} />
             <meshPhysicalMaterial color="#D32F2F" roughness={0.15} clearcoat={0.7} clearcoatRoughness={0.08} />
           </mesh>
+          {/* Strawberry seeds */}
+          {Array.from({ length: 10 }).map((_, i) => {
+            const angle = (i / 10) * Math.PI * 2
+            const r = 0.08
+            return (
+              <mesh key={`seed-${i}`} position={[Math.cos(angle)*r, 0.08, Math.sin(angle)*r]}>
+                <sphereGeometry args={[0.006, 4, 4]} />
+                <meshStandardMaterial color="#FDD835" roughness={0.3} />
+              </mesh>
+            )
+          })}
           {/* Leaf stem */}
-          <mesh position={[0, 0.1, 0]} rotation={[0, 0, 0.2]}>
-            <cylinderGeometry args={[0.008, 0.012, 0.1, 6]} />
+          <mesh position={[0, 0.12, 0]} rotation={[0, 0, 0.2]}>
+            <cylinderGeometry args={[0.008, 0.012, 0.12, 6]} />
             <meshStandardMaterial color="#2E7D32" roughness={0.7} />
+          </mesh>
+          {/* Leaf */}
+          <mesh position={[0.04, 0.14, 0]} rotation={[0.3, 0.5, 0.2]}>
+            <planeGeometry args={[0.08, 0.05]} />
+            <meshPhysicalMaterial color="#388E3C" roughness={0.6} side={THREE.DoubleSide} />
           </mesh>
         </group>
       )}
@@ -1077,11 +1167,11 @@ function CameraRig({ transitionProgress }: { transitionProgress?: MotionValue<nu
       else if (transitionProgress && typeof (transitionProgress as any).get === 'function') tp = (transitionProgress as any).get()
     }
     const dt = Math.min(delta, 0.03)
-    const targetZ = THREE.MathUtils.lerp(3.8, 3.0, tp)
-    const targetY = THREE.MathUtils.lerp(1.1, 0.8, tp)
+    const targetZ = THREE.MathUtils.lerp(3.2, 2.6, tp)
+    const targetY = THREE.MathUtils.lerp(0.9, 0.6, tp)
     camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 6 * dt)
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 6 * dt)
-    camera.lookAt(0, 0.3, 0)
+    camera.lookAt(0, 0.2, 0)
   })
   return null
 }
@@ -1149,13 +1239,13 @@ function InteractiveGroup({ children, rotationOffset, transitionProgress, explod
     // Transition-driven 3D transforms
     const extraRotateY = tp * (Math.PI / 3)      // 0 → 60°
     const extraRotateZ = tp * (Math.PI / 12)      // 0 → 15° tilt
-    const modelScale = 1 + tp * 0.4               // 1.0 → 1.4
+    const modelScale = 1 + tp * 0.25               // 1.0 → 1.25
 
     // Explode-driven perspective distortion (isometric tilt)
     const ep = explodeProgress ?? 0
     const explodeRotateX = ep * 0.35              // tilt back to see between layers
     const explodeRotateZ = ep * 0.08              // slight Z tilt for depth
-    const explodeScale = 1 + ep * 0.15            // grow slightly during explode
+    const explodeScale = 1 + ep * 0.12            // grow slightly during explode
 
     groupRef.current.rotation.x = s.x + explodeRotateX
     groupRef.current.rotation.y = s.y + extraRotateY
