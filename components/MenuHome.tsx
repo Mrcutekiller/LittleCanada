@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate, MotionValue } from 'framer-motion'
-import { ChevronLeft, ChevronRight, ShoppingCart, ArrowLeft, RotateCcw, Layers, Package } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowLeft, RotateCcw, Layers, Package } from 'lucide-react'
 import { MENU, CATEGORIES, type CategoryKey, getIngredientLayers } from '@/lib/menu-data'
 import { useScrollTransition, interpolate } from '@/hooks/useScrollTransition'
 import dynamic from 'next/dynamic'
@@ -26,18 +26,16 @@ function getFoodType(itemId: string): FoodType {
   return 'dessert'
 }
 
-type Theme = 'dark' | 'black' | 'white'
+type Theme = 'dark' | 'white'
 
 const THEMES: Record<Theme, { bg: string; card: string; text: string; muted: string; border: string; accent: string; surface: string }> = {
-  dark:   { bg: '#0C0A09', card: 'from-white/10 to-white/[0.03]', text: '#F5F5F4', muted: '#A89F91', border: 'border-white/10', accent: '#D4AF37', surface: 'bg-white/5' },
-  black:  { bg: '#000000', card: 'from-white/5 to-white/[0.01]', text: '#FFFFFF', muted: '#666666', border: 'border-white/8', accent: '#D4AF37', surface: 'bg-white/3' },
-  white:  { bg: '#F5F5F0', card: 'from-black/5 to-black/[0.02]', text: '#0A0A0A', muted: '#666666', border: 'border-black/10', accent: '#B8941F', surface: 'bg-black/5' },
+  dark:   { bg: '#000000', card: 'from-white/5 to-white/[0.01]', text: '#FFFFFF', muted: '#888888', border: 'border-white/10', accent: '#D4AF37', surface: 'bg-white/5' },
+  white:  { bg: '#FFFFFF', card: 'from-black/5 to-black/[0.02]', text: '#0A0A0A', muted: '#666666', border: 'border-black/10', accent: '#D4AF37', surface: 'bg-black/5' },
 }
 
 export function MenuHome() {
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('burgers')
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedToppings, setSelectedToppings] = useState<string[]>([])
   const explodeProgress = useMotionValue(0)
   const [explodeValue, setExplodeValue] = useState(0)
   const [visibleLayers, setVisibleLayers] = useState<Set<string>>(new Set())
@@ -88,7 +86,6 @@ export function MenuHome() {
   }, [foodType, ingredientLayers, explodeProgress])
 
   useEffect(() => {
-    setSelectedToppings([])
     explodeProgress.set(0)
     setVisibleLayers(new Set(ingredientLayers.map(l => l.id)))
   }, [currentIndex, activeCategory, ingredientLayers, explodeProgress])
@@ -130,38 +127,6 @@ export function MenuHome() {
     return () => unsubscribe()
   }, [dragX, rotationOffset])
 
-  const toppingsForItem = useMemo(() => {
-    const type = getFoodType(item.id)
-    if (type === 'burger' || type === 'sandwich') {
-      return [
-        { id: 'cheese', emoji: '🧀', label: 'Cheddar' },
-        { id: 'lettuce', emoji: '🥬', label: 'Lettuce' },
-        { id: 'tomato', emoji: '🍅', label: 'Tomato' },
-        { id: 'bacon', emoji: '🥓', label: 'Bacon' },
-        { id: 'avocado', emoji: '🥑', label: 'Avocado' },
-        { id: 'onion', emoji: '🧅', label: 'Red Onion' },
-      ]
-    }
-    if (type === 'pizza') {
-      return [
-        { id: 'pepperoni', emoji: '🌶️', label: 'Pepperoni' },
-        { id: 'mushroom', emoji: '🍄', label: 'Mushroom' },
-        { id: 'olive', emoji: '⚫', label: 'Black Olive' },
-        { id: 'lettuce', emoji: '🌿', label: 'Basil Leaf' },
-        { id: 'cheese', emoji: '🧀', label: 'Mozzarella' },
-        { id: 'pepper', emoji: '🫑', label: 'Bell Pepper' },
-      ]
-    }
-    if (type === 'dessert') return [{ id: 'chocolate', emoji: '🍫', label: 'Choc Curls' }]
-    return []
-  }, [item.id])
-
-  const isCustomizable = toppingsForItem.length > 0
-
-  const handleToppingToggle = useCallback((id: string) => {
-    setSelectedToppings(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id])
-  }, [])
-
   const handleLayerClick = useCallback((layerId: string) => {
     setVisibleLayers(prev => {
       const next = new Set(prev)
@@ -198,9 +163,7 @@ export function MenuHome() {
   const backOpacity = interpolate(progress, [0.7, 1], [0, 1])
 
   const cycleTheme = () => {
-    const order: Theme[] = ['dark', 'black', 'white']
-    const idx = order.indexOf(theme)
-    setTheme(order[(idx + 1) % order.length])
+    setTheme(theme === 'dark' ? 'white' : 'dark')
   }
 
   return (
@@ -236,7 +199,7 @@ export function MenuHome() {
             <button onClick={cycleTheme}
               className="w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all active:scale-90"
               style={{ borderColor: t.accent + '40', color: t.accent, backgroundColor: t.accent + '10' }}>
-              {theme === 'dark' ? '🌙' : theme === 'black' ? '⚫' : '☀️'}
+              {theme === 'dark' ? '☀️' : '🌙'}
             </button>
             <a href="tel:+251988984865"
               className="text-[10px] font-bold px-3 py-1.5 rounded-full border transition-all active:scale-95"
@@ -324,13 +287,25 @@ export function MenuHome() {
             <div className="w-full h-full relative">
               <Food3D
                 type={foodType}
-                selectedToppings={isHome ? [] : selectedToppings}
+                selectedToppings={[]}
                 rotationOffset={rotationOffset}
                 transitionProgress={transitionProgress}
                 explodeProgress={explodeValue}
                 visibleLayers={visibleLayers}
                 onLayerClick={handleLayerClick}
               />
+              {item.coverImage && (
+                <motion.div
+                  className="absolute inset-0 z-30"
+                  style={{ opacity: detailOpacity }}
+                >
+                  <img
+                    src={item.coverImage}
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                  />
+                </motion.div>
+              )}
               {!isExploded && isHome && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
                   className="absolute bottom-2 left-1/2 -translate-x-1/2 z-40 px-2.5 py-1 rounded-full backdrop-blur-sm border"
@@ -405,7 +380,7 @@ export function MenuHome() {
           </button>
         </div>
 
-        {/* Bottom Sheet */}
+        {/* Bottom Sheet — Clean explore detail view */}
         <div className="absolute bottom-0 left-0 right-0 z-30"
           style={{
             transform: `translateY(${bottomSheetY}%)`,
@@ -415,101 +390,35 @@ export function MenuHome() {
           <div className="backdrop-blur border-t rounded-t-[2rem] p-4 sm:p-5 transition-colors duration-300"
             style={{ backgroundColor: t.bg + 'F0', borderColor: 'rgba(255,255,255,0.05)', boxShadow: '0 -12px 40px rgba(0,0,0,0.4)' }}>
 
-            <div className="mb-3 flex gap-2">
-              <button onClick={handleExplode}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-bold border transition-all active:scale-95"
-                style={isExploded
-                  ? { borderColor: '#E87A30', backgroundColor: '#E87A3015', color: '#E87A30' }
-                  : { borderColor: 'rgba(255,255,255,0.1)', backgroundColor: t.accent + '08', color: t.muted }
-                }>
-                <Package size={12} />
-                {isExploded ? 'Assembling...' : 'Explode View'}
-              </button>
-              {isExploded && (
-                <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                  onClick={handleReassemble}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[10px] font-bold border active:scale-95"
-                  style={{ borderColor: t.accent + '40', backgroundColor: t.accent + '15', color: t.accent }}>
-                  <RotateCcw size={12} /> All
-                </motion.button>
-              )}
-            </div>
-
-            {isExploded && (
-              <div className="mb-3">
-                <div className="rounded-xl border p-2.5" style={{ backgroundColor: t.accent + '08', borderColor: t.accent + '10' }}>
-                  <p className="text-[7px] sm:text-[8px] font-bold tracking-widest uppercase mb-2" style={{ color: t.accent }}>Tap layers to show/hide</p>
-                  <div className="grid grid-cols-2 gap-1.5 max-h-[90px] overflow-y-auto pr-1 hide-scrollbar">
-                    {ingredientLayers.map(layer => {
-                      const vis = visibleLayers.has(layer.id)
-                      return (
-                        <button key={layer.id} onClick={() => handleLayerClick(layer.id)}
-                          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-left transition-all active:scale-95"
-                          style={vis
-                            ? { borderColor: t.accent + '40', backgroundColor: t.accent + '15', color: t.text }
-                            : { borderColor: 'rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.3)' }
-                          }>
-                          <span className="text-xs">{layer.emoji}</span>
-                          <span className="text-[8px] sm:text-[9px] font-medium truncate flex-1">{layer.label}</span>
-                          <div className="w-2 h-2 rounded-full border" style={vis ? { backgroundColor: t.accent, borderColor: t.accent } : { borderColor: 'rgba(255,255,255,0.2)' }} />
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
+            {item.coverImage && (
+              <div className="mb-4 rounded-2xl overflow-hidden">
+                <img
+                  src={item.coverImage}
+                  alt={item.name}
+                  className="w-full h-[200px] object-cover"
+                />
               </div>
             )}
 
-            <div className="mb-3 py-2 border-t border-b overflow-x-auto hide-scrollbar flex gap-1.5"
-              style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-              {item.ingredients.slice(0, 5).map((ing, i) => (
-                <span key={i} className="flex-shrink-0 px-2 py-1 rounded-full text-[8px] sm:text-[9px] font-medium border"
-                  style={{ backgroundColor: t.accent + '08', color: t.muted, borderColor: t.accent + '10' }}>
-                  {ing}
-                </span>
-              ))}
+            <div className="mb-3 text-center">
+              <h2 className="text-lg sm:text-xl font-serif font-black tracking-tight" style={{ color: t.text }}>{item.name}</h2>
+              <span className="text-lg sm:text-xl font-black" style={{ color: t.accent }}>{price} ETB</span>
             </div>
 
-            {isCustomizable && (
-              <div className="mb-4">
-                <h3 className="text-[8px] sm:text-[9px] font-bold mb-2 uppercase tracking-widest" style={{ color: t.accent }}>
-                  Customize Toppings <span className="normal-case opacity-70 ml-1" style={{ color: t.muted }}>(tap to add)</span>
-                </h3>
-                <div className="grid grid-cols-2 gap-1.5 sm:gap-2 max-h-[120px] sm:max-h-[140px] overflow-y-auto pr-1 hide-scrollbar">
-                  {toppingsForItem.map(topping => {
-                    const active = selectedToppings.includes(topping.id)
-                    return (
-                      <button key={topping.id} onClick={() => handleToppingToggle(topping.id)}
-                        className="flex items-center gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl border transition-all active:scale-95"
-                        style={active
-                          ? { borderColor: t.accent, backgroundColor: t.accent + '15', color: t.text, fontWeight: 700 }
-                          : { borderColor: 'rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.03)', color: t.muted }
-                        }>
-                        <span className="text-sm sm:text-base leading-none">{topping.emoji}</span>
-                        <span className="text-[9px] sm:text-[10px] truncate flex-1 leading-none">{topping.label}</span>
-                        {active && <div className="w-3 h-3 rounded-full flex items-center justify-center text-[8px] font-bold"
-                          style={{ backgroundColor: t.accent, color: t.bg }}>✓</div>}
-                      </button>
-                    )
-                  })}
-                </div>
+            <div className="mb-4">
+              <h3 className="text-[9px] sm:text-[10px] font-bold mb-2 uppercase tracking-widest" style={{ color: t.accent }}>Ingredients</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {item.ingredients.map((ing, i) => (
+                  <span key={i} className="px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-medium border"
+                    style={{ backgroundColor: t.accent + '08', color: t.muted, borderColor: t.accent + '10' }}>
+                    {ing}
+                  </span>
+                ))}
               </div>
-            )}
+            </div>
 
-            <a href="tel:+251988984865"
-              className="flex justify-center items-center gap-2 w-full py-3.5 rounded-xl font-black text-xs tracking-wider uppercase transition shadow-lg active:scale-[0.98]"
-              style={{ backgroundColor: t.accent, color: theme === 'white' ? '#FFFFFF' : '#000000' }}>
-              📞 Call to Order
-            </a>
           </div>
         </div>
-
-        {/* Cart FAB */}
-        <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
-          className="absolute bottom-6 right-6 w-12 h-12 rounded-full flex items-center justify-center shadow-lg z-40"
-          style={{ backgroundColor: '#E87A30', color: '#FFFFFF', boxShadow: '0 4px 20px rgba(232,122,48,0.3)' }}>
-          <ShoppingCart size={20} />
-        </motion.button>
 
       </div>
     </div>
