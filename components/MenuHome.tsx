@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
-import { motion, useMotionValue, useTransform, animate, MotionValue } from 'framer-motion'
-import { ChevronLeft, ChevronRight, ArrowLeft, RotateCcw, Layers, Package } from 'lucide-react'
-import { MENU, CATEGORIES, type CategoryKey, getIngredientLayers } from '@/lib/menu-data'
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
+import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react'
+import { MENU, CATEGORIES, type CategoryKey } from '@/lib/menu-data'
 import { useScrollTransition, interpolate } from '@/hooks/useScrollTransition'
 import dynamic from 'next/dynamic'
 
@@ -11,7 +11,7 @@ const Food3D = dynamic(() => import('./Food3D').then(m => m.Food3D), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full border-4 border-t-[#E87A30] border-r-transparent border-b-[#E87A30] border-l-transparent animate-spin" />
+      <div className="w-8 h-8 rounded-full border-4 border-t-[#D4AF37] border-r-transparent border-b-[#D4AF37] border-l-transparent animate-spin" />
     </div>
   ),
 })
@@ -36,10 +36,7 @@ const THEMES: Record<Theme, { bg: string; card: string; text: string; muted: str
 export function MenuHome() {
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('burgers')
   const [currentIndex, setCurrentIndex] = useState(0)
-  const explodeProgress = useMotionValue(0)
-  const [explodeValue, setExplodeValue] = useState(0)
-  const [visibleLayers, setVisibleLayers] = useState<Set<string>>(new Set())
-  const [theme, setTheme] = useState<Theme>('dark')
+  const [theme, setTheme] = useState<Theme>('white')
 
   const dragX = useMotionValue(0)
   const rotateY = useTransform(dragX, [-300, 300], [-30, 30])
@@ -47,7 +44,6 @@ export function MenuHome() {
   const items = useMemo(() => MENU[activeCategory], [activeCategory])
   const item = items[currentIndex] ?? items[0]
   const foodType = getFoodType(item.id)
-  const ingredientLayers = useMemo(() => getIngredientLayers(foodType), [foodType])
 
   const rotationOffset = useMotionValue(0)
   const baseRotation = useRef(0)
@@ -55,10 +51,7 @@ export function MenuHome() {
 
   const {
     transitionProgress,
-    gestureState,
-    snapTo,
     goToHome,
-    goToDetail,
     onPointerDown,
     onPointerMove,
     onPointerUp,
@@ -72,23 +65,6 @@ export function MenuHome() {
 
   const isHome = progress < 0.5
   const t = THEMES[theme]
-
-  useEffect(() => {
-    const unsub = explodeProgress.on('change', (v) => setExplodeValue(v))
-    return unsub
-  }, [explodeProgress])
-
-  const isExploded = explodeValue > 0.5
-
-  useEffect(() => {
-    setVisibleLayers(new Set(ingredientLayers.map(l => l.id)))
-    explodeProgress.set(0)
-  }, [foodType, ingredientLayers, explodeProgress])
-
-  useEffect(() => {
-    explodeProgress.set(0)
-    setVisibleLayers(new Set(ingredientLayers.map(l => l.id)))
-  }, [currentIndex, activeCategory, ingredientLayers, explodeProgress])
 
   const triggerSpin = useCallback((dir: 1 | -1) => {
     isTransitioning.current = true
@@ -127,34 +103,14 @@ export function MenuHome() {
     return () => unsubscribe()
   }, [dragX, rotationOffset])
 
-  const handleLayerClick = useCallback((layerId: string) => {
-    setVisibleLayers(prev => {
-      const next = new Set(prev)
-      if (next.has(layerId)) next.delete(layerId)
-      else next.add(layerId)
-      return next
-    })
-  }, [])
-
-  const handleExplode = useCallback(() => {
-    const target = explodeProgress.get() > 0.5 ? 0 : 1
-    animate(explodeProgress, target, { type: 'spring', stiffness: 200, damping: 25 })
-  }, [explodeProgress])
-  const handleReassemble = useCallback(() => {
-    animate(explodeProgress, 0, { type: 'spring', stiffness: 200, damping: 25 })
-    setVisibleLayers(new Set(ingredientLayers.map(l => l.id)))
-  }, [ingredientLayers, explodeProgress])
-
   const handleBack = useCallback(() => {
-    animate(explodeProgress, 0, { type: 'spring', stiffness: 200, damping: 25 })
-    setVisibleLayers(new Set(ingredientLayers.map(l => l.id)))
     goToHome()
-  }, [goToHome, ingredientLayers, explodeProgress])
+  }, [goToHome])
 
   const price = item.basePrice
 
-  const cardScale = interpolate(progress, [0, 1], [1, 1.4])
-  const cardY = interpolate(progress, [0, 1], [0, -60])
+  const cardScale = interpolate(progress, [0, 1], [1, 1.2])
+  const cardY = interpolate(progress, [0, 1], [0, -40])
   const cardRadius = interpolate(progress, [0, 1], [32, 24])
   const homeOpacity = interpolate(progress, [0, 0.3], [1, 0])
   const detailOpacity = interpolate(progress, [0.6, 1], [0, 1])
@@ -174,15 +130,7 @@ export function MenuHome() {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      <div className="max-w-lg mx-auto min-h-screen relative flex flex-col overflow-hidden shadow-2xl transition-colors duration-300" style={{ backgroundColor: t.bg }}>
-
-        {/* Background Decorations */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-          <div className="absolute top-[20%] left-[-40px] text-5xl opacity-10 deco-1 select-none">🍅</div>
-          <div className="absolute top-[45%] right-[-30px] text-4xl opacity-[0.07] deco-2 select-none">🌿</div>
-          <div className="absolute bottom-[25%] left-[-20px] text-4xl opacity-[0.07] deco-3 select-none">🧀</div>
-          <div className="absolute bottom-[10%] right-[-40px] text-5xl opacity-10 deco-1 select-none">🥑</div>
-        </div>
+      <div className="max-w-lg mx-auto min-h-screen relative flex flex-col overflow-hidden transition-colors duration-300" style={{ backgroundColor: t.bg }}>
 
         {/* Header */}
         <div className="flex justify-between items-center p-5 sm:p-6 pb-0 z-10 relative"
@@ -215,8 +163,9 @@ export function MenuHome() {
         <div className="flex items-center gap-3 px-4 pt-4 pb-2 z-40 absolute top-0 left-0 right-0"
           style={{ opacity: backOpacity, pointerEvents: backOpacity > 0.5 ? 'auto' : 'none' }}>
           <button onClick={handleBack}
+            onPointerDown={(e) => e.stopPropagation()}
             className="w-9 h-9 rounded-full border flex items-center justify-center active:scale-90 shrink-0"
-            style={{ backgroundColor: t.bg + 'CC', borderColor: 'rgba(255,255,255,0.1)', color: t.accent }}>
+            style={{ backgroundColor: t.bg + 'CC', borderColor: theme === 'white' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)', color: t.accent }}>
             <ArrowLeft size={16} />
           </button>
           <h2 className="text-sm sm:text-base font-serif font-black tracking-tight truncate" style={{ color: t.text }}>{item.name}</h2>
@@ -255,20 +204,9 @@ export function MenuHome() {
             <p className="text-[9px] sm:text-[10px] mt-0.5 truncate max-w-[220px]" style={{ color: t.muted }}>{item.description}</p>
             <span className="text-base sm:text-lg font-black mt-0.5" style={{ color: t.accent }}>{price} ETB</span>
           </div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ opacity: detailOpacity }}>
-            {item.popular && (
-              <span className="text-[7px] sm:text-[8px] font-black tracking-widest uppercase mb-1 px-2 py-0.5 rounded-full border inline-block"
-                style={{ color: t.accent, backgroundColor: t.accent + '15', borderColor: t.accent + '25' }}>
-                Most Popular
-              </span>
-            )}
-            <h2 className="text-lg sm:text-xl font-serif font-black tracking-tight leading-tight" style={{ color: t.text }}>{item.name}</h2>
-            <p className="text-[9px] sm:text-[10px] mt-0.5 truncate max-w-[220px]" style={{ color: t.muted }}>{item.description}</p>
-            <span className="text-base sm:text-lg font-black mt-0.5" style={{ color: t.accent }}>{price} ETB</span>
-          </div>
         </div>
 
-        {/* 3D Food Card — NO pointer events here, framer-motion drag handles horizontal */}
+        {/* Food Card */}
         <div className="flex-1 flex items-center justify-center relative mt-1 z-10">
           <motion.div
             drag="x"
@@ -293,9 +231,9 @@ export function MenuHome() {
                 selectedToppings={[]}
                 rotationOffset={rotationOffset}
                 transitionProgress={transitionProgress}
-                explodeProgress={explodeValue}
-                visibleLayers={visibleLayers}
-                onLayerClick={handleLayerClick}
+                explodeProgress={0}
+                visibleLayers={new Set()}
+                onLayerClick={() => {}}
               />
               {item.coverImage && (
                 <div className="absolute inset-0 z-30">
@@ -306,103 +244,64 @@ export function MenuHome() {
                   />
                 </div>
               )}
-              {!isExploded && isHome && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                  className="absolute bottom-2 left-1/2 -translate-x-1/2 z-40 px-2.5 py-1 rounded-full backdrop-blur-sm border"
-                  style={{ backgroundColor: t.bg + '80', borderColor: 'rgba(255,255,255,0.1)' }}>
-                  <span className="text-[7px] sm:text-[8px] font-bold tracking-wider uppercase flex items-center gap-1" style={{ color: t.muted }}>
-                    <Layers size={8} /> Swipe left/right
-                  </span>
-                </motion.div>
-              )}
             </div>
           </motion.div>
         </div>
 
-        {/* Home Controls */}
-        <div className="mt-3 space-y-2 px-5 sm:px-6 z-10 relative" style={{ opacity: homeOpacity }}>
-          <div className="flex gap-2 px-1">
-            <button onClick={handleExplode}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-bold border transition-all active:scale-95"
-              style={isExploded
-                ? { borderColor: '#E87A30', backgroundColor: '#E87A3015', color: '#E87A30' }
-                : { borderColor: 'rgba(255,255,255,0.1)', backgroundColor: t.accent + '08', color: t.muted }
-              }>
-              <Package size={12} />
-              {isExploded ? 'Assembling...' : 'Explode View'}
-            </button>
-            {isExploded && (
-              <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                onClick={handleReassemble}
-                className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-bold border active:scale-95"
-                style={{ borderColor: t.accent + '40', backgroundColor: t.accent + '15', color: t.accent }}>
-                <RotateCcw size={12} /> Reassemble
-              </motion.button>
-            )}
-          </div>
-
-          {isExploded && (
-            <div className="rounded-xl border p-2.5" style={{ backgroundColor: t.accent + '08', borderColor: t.accent + '10' }}>
-              <p className="text-[7px] sm:text-[8px] font-bold tracking-widest uppercase mb-2" style={{ color: t.accent }}>Tap layers to show/hide</p>
-              <div className="grid grid-cols-2 gap-1.5 max-h-[100px] overflow-y-auto pr-1 hide-scrollbar">
-                {ingredientLayers.map(layer => {
-                  const vis = visibleLayers.has(layer.id)
-                  return (
-                    <button key={layer.id} onClick={() => handleLayerClick(layer.id)}
-                      className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-left transition-all active:scale-95"
-                      style={vis
-                        ? { borderColor: t.accent + '40', backgroundColor: t.accent + '15', color: t.text }
-                        : { borderColor: 'rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.3)' }
-                      }>
-                      <span className="text-xs">{layer.emoji}</span>
-                      <span className="text-[8px] sm:text-[9px] font-medium truncate flex-1">{layer.label}</span>
-                      <div className="w-2 h-2 rounded-full border" style={vis ? { backgroundColor: t.accent, borderColor: t.accent } : { borderColor: 'rgba(255,255,255,0.2)' }} />
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+        {/* View Details Button */}
+        <div className="mt-3 px-5 sm:px-6 z-10 relative" style={{ opacity: homeOpacity }}>
+          <button
+            onClick={() => {
+              const target = 1
+              animate(transitionProgress, target, { type: 'spring', stiffness: 200, damping: 28, mass: 0.8 })
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="w-full py-3 rounded-xl text-[11px] font-bold border transition-all active:scale-95 flex items-center justify-center gap-2"
+            style={{ borderColor: t.accent + '40', backgroundColor: t.accent + '12', color: t.accent }}
+          >
+            <span>Explore This Item</span>
+            <ChevronRight size={14} />
+          </button>
         </div>
 
-        {/* Home Nav */}
-        <div className="flex justify-between items-center mt-3 px-5 sm:px-6 z-10 relative" style={{ opacity: homeOpacity }}>
+        {/* Nav */}
+        <div className="flex justify-between items-center mt-3 mb-4 px-5 sm:px-6 z-10 relative" style={{ opacity: homeOpacity }}>
           <button onClick={() => go(-1)} onPointerDown={(e) => e.stopPropagation()} className="w-9 h-9 rounded-full border flex items-center justify-center hover:opacity-80 active:scale-90"
-            style={{ backgroundColor: t.accent + '08', borderColor: 'rgba(255,255,255,0.1)', color: t.accent }}>
+            style={{ backgroundColor: t.accent + '08', borderColor: theme === 'white' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)', color: t.accent }}>
             <ChevronLeft size={16} />
           </button>
           <p className="text-[9px] sm:text-[10px] tracking-widest uppercase" style={{ color: t.muted + '60' }}>
             {currentIndex + 1} / {items.length}
           </p>
           <button onClick={() => go(1)} onPointerDown={(e) => e.stopPropagation()} className="w-9 h-9 rounded-full border flex items-center justify-center hover:opacity-80 active:scale-90"
-            style={{ backgroundColor: t.accent + '08', borderColor: 'rgba(255,255,255,0.1)', color: t.accent }}>
+            style={{ backgroundColor: t.accent + '08', borderColor: theme === 'white' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)', color: t.accent }}>
             <ChevronRight size={16} />
           </button>
         </div>
 
-        {/* Bottom Sheet — Clean explore detail view */}
+        {/* Bottom Sheet — Explore Detail */}
         <div className="absolute bottom-0 left-0 right-0 z-30"
           style={{
             transform: `translateY(${bottomSheetY}%)`,
             opacity: bottomSheetOpacity,
             pointerEvents: bottomSheetOpacity > 0.5 ? 'auto' : 'none',
           }}>
-          <div className="backdrop-blur border-t rounded-t-[2rem] p-4 sm:p-5 transition-colors duration-300"
-            style={{ backgroundColor: t.bg + 'F0', borderColor: 'rgba(255,255,255,0.05)', boxShadow: '0 -12px 40px rgba(0,0,0,0.4)' }}>
+          <div className="border-t rounded-t-[2rem] p-5 sm:p-6 transition-colors duration-300 overflow-y-auto max-h-[75vh]"
+            style={{ backgroundColor: t.bg, borderColor: theme === 'white' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.05)', boxShadow: '0 -12px 40px rgba(0,0,0,0.15)' }}>
 
             {item.coverImage && (
               <div className="mb-4 rounded-2xl overflow-hidden">
                 <img
                   src={item.coverImage}
                   alt={item.name}
-                  className="w-full h-[200px] object-cover"
+                  className="w-full h-[220px] object-cover"
                 />
               </div>
             )}
 
-            <div className="mb-3 text-center">
-              <h2 className="text-lg sm:text-xl font-serif font-black tracking-tight" style={{ color: t.text }}>{item.name}</h2>
-              <span className="text-lg sm:text-xl font-black" style={{ color: t.accent }}>{price} ETB</span>
+            <div className="mb-4 text-center">
+              <h2 className="text-xl sm:text-2xl font-serif font-black tracking-tight" style={{ color: t.text }}>{item.name}</h2>
+              <span className="text-xl sm:text-2xl font-black" style={{ color: t.accent }}>{price} ETB</span>
             </div>
 
             <div className="mb-4">
@@ -416,6 +315,13 @@ export function MenuHome() {
                 ))}
               </div>
             </div>
+
+            {item.funFact && (
+              <div className="rounded-xl p-4 border" style={{ backgroundColor: t.accent + '08', borderColor: t.accent + '15' }}>
+                <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: t.accent }}>🍁 Canada Fun Fact</p>
+                <p className="text-[11px] sm:text-[12px] leading-relaxed" style={{ color: t.muted }}>{item.funFact}</p>
+              </div>
+            )}
 
           </div>
         </div>
