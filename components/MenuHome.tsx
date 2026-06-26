@@ -197,11 +197,13 @@ export function MenuHome() {
           </div>
           <div className="flex items-center gap-2">
             <button onClick={cycleTheme}
+              onPointerDown={(e) => e.stopPropagation()}
               className="w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all active:scale-90"
               style={{ borderColor: t.accent + '40', color: t.accent, backgroundColor: t.accent + '10' }}>
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
             <a href="tel:+251988984865"
+              onPointerDown={(e) => e.stopPropagation()}
               className="text-[10px] font-bold px-3 py-1.5 rounded-full border transition-all active:scale-95"
               style={{ color: t.accent, borderColor: t.accent + '30', backgroundColor: t.accent + '10' }}>
               📞 Call
@@ -225,6 +227,7 @@ export function MenuHome() {
           style={{ opacity: homeOpacity }}>
           {CATEGORIES.map(cat => (
             <button key={cat.key} onClick={() => handleCategoryChange(cat.key)}
+              onPointerDown={(e) => e.stopPropagation()}
               className={`snap-start flex-shrink-0 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-[11px] font-bold transition-all active:scale-95 ${
                 activeCategory === cat.key ? 'shadow-md' : ''
               }`}
@@ -295,16 +298,13 @@ export function MenuHome() {
                 onLayerClick={handleLayerClick}
               />
               {item.coverImage && (
-                <motion.div
-                  className="absolute inset-0 z-30"
-                  style={{ opacity: detailOpacity }}
-                >
+                <div className="absolute inset-0 z-30">
                   <img
                     src={item.coverImage}
                     alt={item.name}
                     className="w-full h-full object-cover"
                   />
-                </motion.div>
+                </div>
               )}
               {!isExploded && isHome && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
@@ -367,14 +367,14 @@ export function MenuHome() {
 
         {/* Home Nav */}
         <div className="flex justify-between items-center mt-3 px-5 sm:px-6 z-10 relative" style={{ opacity: homeOpacity }}>
-          <button onClick={() => go(-1)} className="w-9 h-9 rounded-full border flex items-center justify-center hover:opacity-80 active:scale-90"
+          <button onClick={() => go(-1)} onPointerDown={(e) => e.stopPropagation()} className="w-9 h-9 rounded-full border flex items-center justify-center hover:opacity-80 active:scale-90"
             style={{ backgroundColor: t.accent + '08', borderColor: 'rgba(255,255,255,0.1)', color: t.accent }}>
             <ChevronLeft size={16} />
           </button>
           <p className="text-[9px] sm:text-[10px] tracking-widest uppercase" style={{ color: t.muted + '60' }}>
             {currentIndex + 1} / {items.length}
           </p>
-          <button onClick={() => go(1)} className="w-9 h-9 rounded-full border flex items-center justify-center hover:opacity-80 active:scale-90"
+          <button onClick={() => go(1)} onPointerDown={(e) => e.stopPropagation()} className="w-9 h-9 rounded-full border flex items-center justify-center hover:opacity-80 active:scale-90"
             style={{ backgroundColor: t.accent + '08', borderColor: 'rgba(255,255,255,0.1)', color: t.accent }}>
             <ChevronRight size={16} />
           </button>

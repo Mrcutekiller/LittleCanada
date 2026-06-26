@@ -34,6 +34,10 @@ export function useScrollTransition() {
 
   const handlePointerDown = useCallback((e: PointerEvent<HTMLDivElement>) => {
     if (isAnimating.current) return
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('a') || target.closest('input')) {
+      return
+    }
     const s = gestureState.current
     s.mode = 'undecided'
     s.startX = e.clientX
