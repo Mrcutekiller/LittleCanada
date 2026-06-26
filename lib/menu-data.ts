@@ -26,7 +26,7 @@ export const MENU: MenuCategory = {
       popular: true,
       description: 'Beef patty with Canadian cheese & house sauces',
       ingredients: ['Beef patty', 'Canadian cheese', 'Lettuce', 'Tomato', 'Pickles', 'House special sauce', 'Brioche bun'],
-      coverImage: '/food/b1-lc-special-burger.png',
+      coverImage: '/food/L.C Special Burger.png',
     },
     {
       id: 'b2',
@@ -35,7 +35,7 @@ export const MENU: MenuCategory = {
       emoji: '🍗',
       description: 'Crispy fried chicken fillet with Canadian cheese',
       ingredients: ['Crispy fried chicken fillet', 'Canadian cheese', 'Lettuce', 'Coleslaw', 'Sriracha mayo', 'Brioche bun'],
-      coverImage: '/food/b2-fried-chicken-burger.png',
+      coverImage: '/food/Fried Chicken Burger.png',
     },
     {
       id: 'b3',
@@ -44,7 +44,7 @@ export const MENU: MenuCategory = {
       emoji: '🍔',
       description: 'Best of both worlds — beef & chicken in one',
       ingredients: ['Beef patty', 'Fried chicken fillet', 'Canadian cheese', 'Lettuce', 'Tomato', 'House sauce', 'Brioche bun'],
-      coverImage: '/food/b3-half-half-burger.png',
+      coverImage: '/food/Half Half Burger.png',
     },
     {
       id: 'b4',
@@ -53,7 +53,7 @@ export const MENU: MenuCategory = {
       emoji: '🥗',
       description: '100% plant-based with vegan mayo',
       ingredients: ['Plant-based patty', 'Vegan mayo', 'Lettuce', 'Tomato', 'Pickles', 'Mustard', 'Brioche bun'],
-      coverImage: '/food/b4-veggie-burger.png',
+      coverImage: '/food/Veggie Burger.png',
     },
     {
       id: 'b5',
@@ -63,7 +63,7 @@ export const MENU: MenuCategory = {
       popular: true,
       description: 'Double stacked beef patties — the real deal',
       ingredients: ['Double beef patties', 'Double Canadian cheese', 'Lettuce', 'Tomato', 'Pickles', 'House sauce', 'Brioche bun'],
-      coverImage: '/food/b5-double-beef-burger.png',
+      coverImage: '/food/Double Beef Burger.png',
     },
     {
       id: 'b6',
@@ -72,7 +72,7 @@ export const MENU: MenuCategory = {
       emoji: '🍗',
       description: 'Stacked double chicken with Canadian cheese',
       ingredients: ['Double fried chicken fillets', 'Canadian cheese', 'Lettuce', 'Coleslaw', 'Sriracha mayo', 'Brioche bun'],
-      coverImage: '/food/b6-double-chicken-burger.png',
+      coverImage: '/food/Double Chicken Burger.png',
     },
   ],
   pizzas: [
@@ -84,7 +84,7 @@ export const MENU: MenuCategory = {
       popular: true,
       description: 'Signature house pizza with veggie & chicken',
       ingredients: ['Tomato base', 'Mozzarella', 'Grilled chicken', 'Bell peppers', 'Onions', 'Mushrooms', 'House seasoning'],
-      coverImage: '/food/p1-lc-special-pizza.png',
+      coverImage: '/food/L.C Special Pizza.png',
     },
     {
       id: 'p2',
@@ -93,7 +93,7 @@ export const MENU: MenuCategory = {
       emoji: '🍕',
       description: 'Smoky BBQ base with grilled chicken & veggies',
       ingredients: ['BBQ sauce base', 'Mozzarella', 'Grilled chicken', 'Red onion', 'Corn', 'Cilantro'],
-      coverImage: '/food/p2-bbq-chicken-pizza.png',
+      coverImage: '/food/BBQ Chicken Pizza.png',
     },
     {
       id: 'p3',
@@ -103,7 +103,7 @@ export const MENU: MenuCategory = {
       popular: true,
       description: 'Tender meat with caramelized onions & mushrooms',
       ingredients: ['Tomato base', 'Mozzarella', 'Tender beef strips', 'Caramelized onions', 'Mushrooms', 'Garlic'],
-      coverImage: '/food/p3-steak-pizza.png',
+      coverImage: '/food/Steak Pizza.png',
     },
     {
       id: 'p4',
@@ -112,7 +112,7 @@ export const MENU: MenuCategory = {
       emoji: '🍕',
       description: 'Classic Italian simplicity at its finest',
       ingredients: ['San Marzano tomato base', 'Fresh mozzarella', 'Basil', 'Olive oil', 'Sea salt'],
-      coverImage: '/food/p4-margarita-pizza.png',
+      coverImage: '/food/Margarita Pizza.png',
     },
     {
       id: 'p5',
@@ -121,7 +121,7 @@ export const MENU: MenuCategory = {
       emoji: '🍕',
       description: 'Sweet meets savory with ham & pineapple',
       ingredients: ['Tomato base', 'Mozzarella', 'Smoked ham', 'Pineapple', 'Bell peppers'],
-      coverImage: '/food/p5-hawaiian-pizza.png',
+      coverImage: '/food/Hawaiian Pizza.png',
     },
     {
       id: 'p6',
@@ -130,7 +130,7 @@ export const MENU: MenuCategory = {
       emoji: '🌿',
       description: 'Fresh plant-based toppings on tomato base',
       ingredients: ['Tomato base', 'Mozzarella', 'Bell peppers', 'Mushrooms', 'Onions', 'Olives', 'Zucchini'],
-      coverImage: '/food/p6-veggie-pizza.png',
+      coverImage: '/food/Veggie Pizza.png',
     },
   ],
   breakfast: [
@@ -141,7 +141,7 @@ export const MENU: MenuCategory = {
       emoji: '🍳',
       description: 'Fresh egg omelette in a toasted sandwich',
       ingredients: ['Fresh eggs', 'Toasted bread', 'Butter', 'Salt', 'Pepper', 'Cheese (optional)'],
-      coverImage: '/food/br1-omelette-sandwich.png',
+      coverImage: '/food/Omelette Sandwich.png',
     },
     {
       id: 'br2',
@@ -150,7 +150,7 @@ export const MENU: MenuCategory = {
       emoji: '🥪',
       description: 'Premium tuna with fresh fillings',
       ingredients: ['Premium tuna', 'Mayonnaise', 'Lettuce', 'Tomato', 'Toasted bread'],
-      coverImage: '/food/br2-tuna-sandwich.png',
+      coverImage: '/food/Tuna Sandwich.png',
     },
     {
       id: 'br3',
@@ -159,7 +159,7 @@ export const MENU: MenuCategory = {
       emoji: '🍞',
       description: 'Golden crispy French toast — a morning classic',
       ingredients: ['Thick-cut bread', 'Eggs', 'Milk', 'Cinnamon', 'Vanilla', 'Powdered sugar', 'Maple syrup'],
-      coverImage: '/food/br3-french-toast.png',
+      coverImage: '/food/French Toast.png',
     },
   ],
   desserts: [
@@ -171,7 +171,7 @@ export const MENU: MenuCategory = {
       popular: true,
       description: 'Dessert pizza loaded with Nutella & toppings',
       ingredients: ['Nutella base', 'Mozzarella', 'Banana', 'Strawberry', 'Chocolate drizzle', 'Powdered sugar'],
-      coverImage: '/food/d1-chocolate-pizza.png',
+      coverImage: '/food/Chocolate Pizza.png',
     },
     {
       id: 'd2',
@@ -180,7 +180,7 @@ export const MENU: MenuCategory = {
       emoji: '🧇',
       description: 'Fluffy waffle or pancake stack',
       ingredients: ['Flour', 'Eggs', 'Milk', 'Butter', 'Maple syrup', 'Fresh berries'],
-      coverImage: '/food/d2-waffle-pancake.png',
+      coverImage: '/food/Waffle Pancake.png',
     },
     {
       id: 'd3',
@@ -189,7 +189,7 @@ export const MENU: MenuCategory = {
       emoji: '🍦',
       description: 'Creamy scoops in classic flavours',
       ingredients: ['Cream', 'Milk', 'Sugar', 'Vanilla — served in classic flavours'],
-      coverImage: '/food/d3-ice-cream.png',
+      coverImage: '/food/Ice Cream.png',
     },
     {
       id: 'd4',
@@ -198,7 +198,7 @@ export const MENU: MenuCategory = {
       emoji: '🍪',
       description: 'Nutella spread between ice cream layers',
       ingredients: ['Nutella', 'Ice cream scoops', 'Waffle cookies'],
-      coverImage: '/food/d4-nutella-ice-cream.png',
+      coverImage: '/food/Nutella Ice Cream Sandwich.png',
     },
     {
       id: 'd5',
@@ -207,7 +207,7 @@ export const MENU: MenuCategory = {
       emoji: '☕',
       description: 'Chilled coffee or blended milkshake',
       ingredients: ['Espresso or blended milk', 'Ice', 'Flavoured syrups'],
-      coverImage: '/food/d5-ice-coffee.png',
+      coverImage: '/food/Ice Coffee & Milkshake.png',
     },
     {
       id: 'd6',
@@ -216,7 +216,7 @@ export const MENU: MenuCategory = {
       emoji: '🥤',
       description: 'Assorted chilled soft drinks',
       ingredients: ['Assorted chilled canned and bottled beverages'],
-      coverImage: '/food/d6-soft-drinks.png',
+      coverImage: '/food/Soft Drinks.png',
     },
   ],
 }
