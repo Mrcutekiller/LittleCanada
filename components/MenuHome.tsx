@@ -143,6 +143,25 @@ export function MenuHome() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // Programmatic global preloader for instant asset load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Eagerly preload all cover images
+      Object.values(MENU).flat().forEach((menuItem) => {
+        if (menuItem.coverImage) {
+          const img = new Image()
+          img.src = `${menuItem.coverImage}?v=lc-2`
+        }
+      })
+
+      // Eagerly preload all ingredient images
+      Object.values(INGREDIENT_IMAGES).forEach((url) => {
+        const img = new Image()
+        img.src = url
+      })
+    }
+  }, [])
+
   const {
     transitionProgress,
     goToHome,
@@ -223,8 +242,20 @@ export function MenuHome() {
     >
       <div className="max-w-lg mx-auto h-[100dvh] max-h-[100dvh] relative flex flex-col overflow-hidden transition-colors duration-300" style={{ backgroundColor: t.bg }}>
 
-        {/* Background Image Preloader for instant transitions */}
-        <div style={{ display: 'none', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }} aria-hidden="true">
+        {/* Background Image Preloader for instant transitions (offscreen to force browser layout and eager decoding) */}
+        <div 
+          style={{ 
+            position: 'absolute', 
+            width: '1px', 
+            height: '1px', 
+            opacity: 0.01, 
+            overflow: 'hidden', 
+            pointerEvents: 'none',
+            top: '-10px',
+            left: '-10px'
+          }} 
+          aria-hidden="true"
+        >
           {/* Preload cover images for all menu items globally */}
           {Object.values(MENU).flat().map((menuItem) => (
             menuItem.coverImage ? (
@@ -242,7 +273,7 @@ export function MenuHome() {
               key={name}
               src={url}
               alt=""
-              loading="lazy"
+              loading="eager"
             />
           ))}
         </div>
