@@ -287,13 +287,14 @@ export function MenuHome() {
   const handleBack = useCallback(() => { goToHome() }, [goToHome])
 
   const handleDetailSwipeDown = useCallback((e: React.PointerEvent) => {
+    e.stopPropagation()
     detailSwipeStartY.current = e.clientY
     detailSwiping.current = true
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
   }, [])
 
   const handleDetailSwipeMove = useCallback((e: React.PointerEvent) => {
     if (!detailSwiping.current) return
+    e.stopPropagation()
     const dy = e.clientY - detailSwipeStartY.current
     if (dy > 80) {
       detailSwiping.current = false
@@ -301,7 +302,8 @@ export function MenuHome() {
     }
   }, [goToHome])
 
-  const handleDetailSwipeUp = useCallback(() => {
+  const handleDetailSwipeUp = useCallback((e: React.PointerEvent) => {
+    e.stopPropagation()
     detailSwiping.current = false
   }, [])
 
@@ -477,15 +479,16 @@ export function MenuHome() {
         {/* Bottom Sheet */}
         <div className="absolute bottom-0 left-0 right-0 z-30"
           style={{ transform: `translateY(${bottomSheetY}%)`, opacity: bottomSheetOpacity, pointerEvents: bottomSheetOpacity > 0.5 ? 'auto' : 'none' }}>
-          <div className="border-t rounded-t-[2.5rem] transition-colors duration-300 overflow-y-auto h-[74vh] sm:h-[78vh] relative"
+          <div className="border-t rounded-t-[2.5rem] transition-colors duration-300 overflow-y-auto h-[74vh] sm:h-[78vh] relative detail-sheet"
             style={{ backgroundColor: t.bg, borderColor: 'rgba(0,0,0,0.08)', boxShadow: '0 -12px 40px rgba(0,0,0,0.15)' }}>
 
             {/* Swipe-down handle */}
-            <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+            <div className="flex justify-center pt-3 pb-4 cursor-grab active:cursor-grabbing detail-handle"
               onPointerDown={handleDetailSwipeDown} onPointerMove={handleDetailSwipeMove} onPointerUp={handleDetailSwipeUp}>
-              <div className="flex flex-col items-center gap-1">
-                <ChevronDown size={16} style={{ color: t.muted + '40' }} />
-                <div className="w-12 h-1 rounded-full bg-black/10" />
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="w-10 h-1 rounded-full bg-black/15" />
+                <ChevronDown size={18} style={{ color: t.accent, opacity: 0.5 }} />
+                <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: t.muted + '50' }}>Swipe down to close</p>
               </div>
             </div>
 
