@@ -159,14 +159,12 @@ export function MenuHome() {
         if (menuItem.coverImage) {
           const img = new Image()
           img.src = menuItem.coverImage
-          img.decoding = 'sync'
         }
       })
 
       Object.values(INGREDIENT_IMAGES).forEach((url) => {
         const img = new Image()
         img.src = url
-        img.decoding = 'sync'
       })
     }
   }, [])
@@ -299,8 +297,6 @@ export function MenuHome() {
                 src={menuItem.coverImage}
                 alt=""
                 loading="eager"
-                fetchPriority="high"
-                decoding="sync"
               />
             ) : null
           ))}
@@ -419,8 +415,8 @@ export function MenuHome() {
                         src={menuItem.coverImage}
                         alt={menuItem.name}
                         className="w-full h-full object-contain"
-                        fetchPriority="high"
-                        decoding="sync"
+                        decoding={isActive ? 'sync' : 'async'}
+                        fetchPriority={isActive ? 'high' : 'low'}
                       />
                     )}
                   </div>
@@ -504,8 +500,8 @@ export function MenuHome() {
                         src={menuItem.coverImage}
                         alt={menuItem.name}
                         className="w-full h-full object-contain p-2 absolute inset-0"
+                        decoding={menuItem.id === item.id ? 'sync' : 'async'}
                         fetchPriority={menuItem.id === item.id ? 'high' : 'low'}
-                        decoding="sync"
                         style={{
                           opacity: menuItem.id === item.id ? 1 : 0,
                           pointerEvents: menuItem.id === item.id ? 'auto' : 'none',
