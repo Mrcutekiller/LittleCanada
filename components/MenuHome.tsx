@@ -207,9 +207,9 @@ export function MenuHome() {
             ) : null
           ))}
           {/* Preload all ingredient modal images */}
-          {Object.values(INGREDIENT_IMAGES).map((url) => (
+          {Object.entries(INGREDIENT_IMAGES).map(([name, url]) => (
             <img
-              key={url}
+              key={name}
               src={url}
               alt=""
               loading="lazy"
