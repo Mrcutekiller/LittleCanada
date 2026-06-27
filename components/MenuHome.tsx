@@ -135,8 +135,8 @@ export function MenuHome() {
   const [containerWidth, setContainerWidth] = useState(360)
 
   useEffect(() => {
-    const fadeTimer = setTimeout(() => setSplashFading(true), 1400)
-    const hideTimer = setTimeout(() => setShowSplash(false), 1800)
+    const fadeTimer = setTimeout(() => setSplashFading(true), 500)
+    const hideTimer = setTimeout(() => setShowSplash(false), 700)
     return () => { clearTimeout(fadeTimer); clearTimeout(hideTimer) }
   }, [])
 
@@ -269,7 +269,7 @@ export function MenuHome() {
               className="h-full"
               style={{
                 backgroundColor: '#F5A623',
-                animation: 'splash-progress 1.4s ease-out forwards',
+                animation: 'splash-progress 0.5s ease-out forwards',
               }}
             />
           </div>

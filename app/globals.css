@@ -76,6 +76,6 @@ canvas { touch-action: none; }
 
 /* ─── Splash Screen ───────────────────────────────────────────────────────── */
 .splash-screen {
-  animation: splash-fade-out 0.4s ease-out forwards;
-  animation-delay: 1.4s;
+  animation: splash-fade-out 0.15s ease-out forwards;
+  animation-delay: 0.5s;
 }
