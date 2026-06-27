@@ -2,11 +2,13 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
-import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react'
-import { MENU, CATEGORIES, type CategoryKey } from '@/lib/menu-data'
+import { ChevronLeft, ChevronRight, ArrowLeft, ChevronDown } from 'lucide-react'
+import { MENU, CATEGORIES, type CategoryKey, type MenuItem } from '@/lib/menu-data'
 import { useScrollTransition, interpolate } from '@/hooks/useScrollTransition'
 
 const MOST_ORDERED_IDS = new Set(['b1', 'b5', 'p1'])
+const RECENT_KEY = 'lc_recently_viewed'
+const MAX_RECENT = 4
 
 function isDarkImage(imgSrc?: string): boolean {
   if (!imgSrc) return false
@@ -124,6 +126,39 @@ function capitalizeWords(str: string): string {
   return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
 
+function loadRecent(): { item: MenuItem; category: CategoryKey }[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(RECENT_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+function saveRecent(list: { item: MenuItem; category: CategoryKey }[]) {
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)) } catch {}
+}
+
+function SkeletonImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [loaded, setLoaded] = useState(false)
+  return (
+    <div className={`relative ${className ?? ''}`}>
+      {!loaded && (
+        <div className="absolute inset-0 rounded-2xl overflow-hidden" style={{ backgroundColor: '#E8E8E8' }}>
+          <div className="skeleton-pulse absolute inset-0" />
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`${className ?? ''} transition-opacity duration-150`}
+        style={{ opacity: loaded ? 1 : 0 }}
+        onLoad={() => setLoaded(true)}
+        decoding="async"
+      />
+    </div>
+  )
+}
+
 export function MenuHome() {
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('burgers')
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -131,9 +166,18 @@ export function MenuHome() {
   const [showSplash, setShowSplash] = useState(true)
   const [splashFading, setSplashFading] = useState(false)
   const [showLocation, setShowLocation] = useState(false)
+  const [recentItems, setRecentItems] = useState<{ item: MenuItem; category: CategoryKey }[]>([])
+  const [imageLoaded, setImageLoaded] = useState<Record<string, boolean>>({})
 
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(360)
+
+  const detailSwipeStartY = useRef(0)
+  const detailSwiping = useRef(false)
+
+  useEffect(() => {
+    setRecentItems(loadRecent())
+  }, [])
 
   useEffect(() => {
     const fadeTimer = setTimeout(() => setSplashFading(true), 500)
@@ -162,7 +206,6 @@ export function MenuHome() {
           img.src = menuItem.coverImage
         }
       })
-
       Object.values(INGREDIENT_IMAGES).forEach((url) => {
         const img = new Image()
         img.src = url
@@ -189,6 +232,17 @@ export function MenuHome() {
   const items = useMemo(() => MENU[activeCategory], [activeCategory])
   const item = items[currentIndex] ?? items[0]
 
+  useEffect(() => {
+    if (!item) return
+    setRecentItems(prev => {
+      const next = prev.filter(r => r.item.id !== item.id)
+      next.unshift({ item, category: activeCategory })
+      const trimmed = next.slice(0, MAX_RECENT)
+      saveRecent(trimmed)
+      return trimmed
+    })
+  }, [item?.id, activeCategory])
+
   const go = useCallback((dir: 1 | -1) => {
     setCurrentIndex(prev => {
       const next = prev + dir
@@ -203,6 +257,12 @@ export function MenuHome() {
     setCurrentIndex(0)
   }
 
+  const handleRecentTap = (entry: { item: MenuItem; category: CategoryKey }) => {
+    setActiveCategory(entry.category)
+    const idx = MENU[entry.category].findIndex(m => m.id === entry.item.id)
+    if (idx >= 0) setCurrentIndex(idx)
+  }
+
   const cardWidth = containerWidth > 480 ? 270 : 230
   const gap = 16
   const centeringOffset = (containerWidth - cardWidth) / 2
@@ -215,7 +275,6 @@ export function MenuHome() {
   const handleCardDragEnd = useCallback((_: any, info: { offset: { x: number }; velocity: { x: number } }) => {
     const swipe = info.offset.x
     const velocity = info.velocity.x
-    
     if (swipe < -60 || velocity < -500) {
       go(1)
     } else if (swipe > 60 || velocity > 500) {
@@ -225,9 +284,26 @@ export function MenuHome() {
     }
   }, [go, dragX, targetX])
 
-  const handleBack = useCallback(() => {
-    goToHome()
+  const handleBack = useCallback(() => { goToHome() }, [goToHome])
+
+  const handleDetailSwipeDown = useCallback((e: React.PointerEvent) => {
+    detailSwipeStartY.current = e.clientY
+    detailSwiping.current = true
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+  }, [])
+
+  const handleDetailSwipeMove = useCallback((e: React.PointerEvent) => {
+    if (!detailSwiping.current) return
+    const dy = e.clientY - detailSwipeStartY.current
+    if (dy > 80) {
+      detailSwiping.current = false
+      goToHome()
+    }
   }, [goToHome])
+
+  const handleDetailSwipeUp = useCallback(() => {
+    detailSwiping.current = false
+  }, [])
 
   const price = item.basePrice
 
@@ -248,87 +324,40 @@ export function MenuHome() {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      {/* ─── Loading Splash Screen ────────────────────────────────────────── */}
       {showSplash && (
         <div
           className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center ${splashFading ? 'splash-screen' : ''}`}
           style={{ backgroundColor: '#0C0A09' }}
         >
-          <h1
-            className="text-[60px] font-bold tracking-tight"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#F5A623' }}
-          >
-            LC
-          </h1>
-          <p className="text-[11px] tracking-widest uppercase mt-1" style={{ color: '#666666' }}>
-            Premium Café Experience
-          </p>
+          <h1 className="text-[60px] font-bold tracking-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#F5A623' }}>LC</h1>
+          <p className="text-[11px] tracking-widest uppercase mt-1" style={{ color: '#666666' }}>Premium Café Experience</p>
           <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ backgroundColor: 'rgba(245,166,35,0.15)' }}>
-            <div
-              className="h-full"
-              style={{
-                backgroundColor: '#F5A623',
-                animation: 'splash-progress 0.5s ease-out forwards',
-              }}
-            />
+            <div className="h-full" style={{ backgroundColor: '#F5A623', animation: 'splash-progress 0.5s ease-out forwards' }} />
           </div>
         </div>
       )}
 
       <div className="max-w-lg mx-auto h-[100dvh] max-h-[100dvh] relative flex flex-col overflow-hidden transition-colors duration-300" style={{ backgroundColor: t.bg }}>
 
-        {/* Background Image Preloader */}
-        <div 
-          style={{ 
-            position: 'absolute', 
-            width: '1px', 
-            height: '1px', 
-            opacity: 0.01, 
-            overflow: 'hidden', 
-            pointerEvents: 'none',
-            top: '-10px',
-            left: '-10px'
-          }} 
-          aria-hidden="true"
-        >
+        <div style={{ position: 'absolute', width: '1px', height: '1px', opacity: 0.01, overflow: 'hidden', pointerEvents: 'none', top: '-10px', left: '-10px' }} aria-hidden="true">
           {Object.values(MENU).flat().map((menuItem) => (
-            menuItem.coverImage ? (
-              <img
-                key={menuItem.id}
-                src={menuItem.coverImage}
-                alt=""
-                loading="eager"
-              />
-            ) : null
+            menuItem.coverImage ? <img key={menuItem.id} src={menuItem.coverImage} alt="" loading="eager" /> : null
           ))}
           {Object.entries(INGREDIENT_IMAGES).map(([name, url]) => (
-            <img
-              key={name}
-              src={url}
-              alt=""
-              loading="eager"
-            />
+            <img key={name} src={url} alt="" loading="eager" />
           ))}
         </div>
 
         {/* Header */}
-        <div className="flex justify-between items-center p-4 sm:p-5 pb-0 z-10 relative"
-          style={{ opacity: homeOpacity }}>
+        <div className="flex justify-between items-center p-4 sm:p-5 pb-0 z-10 relative" style={{ opacity: homeOpacity }}>
           <div>
-            <h1 className="text-xl sm:text-2xl font-serif font-black tracking-tight" style={{ color: t.accent }}>
-              Little Canada
-            </h1>
-            <p className="text-[8px] sm:text-[9px] mt-0.5 font-bold tracking-widest uppercase" style={{ color: t.muted }}>
-              Premium Café Experience
-            </p>
+            <h1 className="text-xl sm:text-2xl font-serif font-black tracking-tight" style={{ color: t.accent }}>Little Canada</h1>
+            <p className="text-[8px] sm:text-[9px] mt-0.5 font-bold tracking-widest uppercase" style={{ color: t.muted }}>Premium Café Experience</p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowLocation(true)}
-              onPointerDown={(e) => e.stopPropagation()}
+            <button onClick={() => setShowLocation(true)} onPointerDown={(e) => e.stopPropagation()}
               className="text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-full border transition-all active:scale-95 flex items-center gap-1"
-              style={{ color: t.accent, borderColor: t.accent + '30', backgroundColor: t.accent + '10' }}
-            >
+              style={{ color: t.accent, borderColor: t.accent + '30', backgroundColor: t.accent + '10' }}>
               📍 Gerji, Addis
             </button>
           </div>
@@ -337,8 +366,7 @@ export function MenuHome() {
         {/* Back button */}
         <div className="flex items-center gap-3 px-4 pt-4 pb-2 z-40 absolute top-0 left-0 right-0"
           style={{ opacity: backOpacity, pointerEvents: backOpacity > 0.5 ? 'auto' : 'none' }}>
-          <button onClick={handleBack}
-            onPointerDown={(e) => e.stopPropagation()}
+          <button onClick={handleBack} onPointerDown={(e) => e.stopPropagation()}
             className="w-9 h-9 rounded-full border flex items-center justify-center active:scale-90 shrink-0"
             style={{ backgroundColor: t.bg + 'CC', borderColor: 'rgba(0,0,0,0.1)', color: t.accent }}>
             <ArrowLeft size={16} />
@@ -347,14 +375,10 @@ export function MenuHome() {
         </div>
 
         {/* Categories */}
-        <div className="flex gap-2 overflow-x-auto hide-scrollbar py-2 mt-2 sm:mt-3 px-5 sm:px-6 z-10 relative snap-x"
-          style={{ opacity: homeOpacity }}>
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar py-2 mt-2 sm:mt-3 px-5 sm:px-6 z-10 relative snap-x" style={{ opacity: homeOpacity }}>
           {CATEGORIES.map(cat => (
-            <button key={cat.key} onClick={() => handleCategoryChange(cat.key)}
-              onPointerDown={(e) => e.stopPropagation()}
-              className={`snap-start flex-shrink-0 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-[11px] font-bold transition-all active:scale-95 ${
-                activeCategory === cat.key ? 'shadow-md' : ''
-              }`}
+            <button key={cat.key} onClick={() => handleCategoryChange(cat.key)} onPointerDown={(e) => e.stopPropagation()}
+              className={`snap-start flex-shrink-0 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-[11px] font-bold transition-all active:scale-95 ${activeCategory === cat.key ? 'shadow-md' : ''}`}
               style={activeCategory === cat.key
                 ? { backgroundColor: t.accent, color: '#ffffff' }
                 : { backgroundColor: t.accent + '08', color: t.muted, border: `1px solid ${t.accent}15` }
@@ -364,18 +388,36 @@ export function MenuHome() {
           ))}
         </div>
 
+        {/* Recently Viewed */}
+        {recentItems.length > 0 && homeOpacity > 0.5 && (
+          <div className="px-5 sm:px-6 mt-3 z-10 relative" style={{ opacity: homeOpacity }}>
+            <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: t.muted + '80' }}>Recently Viewed</p>
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar">
+              {recentItems.map((entry) => (
+                <button key={entry.item.id} onClick={() => handleRecentTap(entry)} onPointerDown={(e) => e.stopPropagation()}
+                  className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border transition-all active:scale-95"
+                  style={{ borderColor: t.accent + '20', backgroundColor: t.accent + '05' }}>
+                  <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 bg-black/5 flex items-center justify-center">
+                    {entry.item.coverImage && <img src={entry.item.coverImage} alt={entry.item.name} className="w-full h-full object-contain" decoding="async" />}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[9px] font-bold truncate max-w-[90px]" style={{ color: t.text }}>{entry.item.name}</p>
+                    <p className="text-[8px]" style={{ color: t.accent }}>{entry.item.basePrice} ETB</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Food Name */}
         <div className="text-center mt-2 sm:mt-3 mb-1 min-h-[50px] sm:min-h-[60px] flex flex-col items-center justify-center z-10 relative px-5">
           <div className="flex flex-col items-center" style={{ opacity: homeOpacity }}>
             {item.popular && (
               <span className="text-[7px] sm:text-[8px] font-black tracking-widest uppercase mb-1 px-2 py-0.5 rounded-full border"
-                style={{ color: t.accent, backgroundColor: t.accent + '15', borderColor: t.accent + '25' }}>
-                🔥 Popular
-              </span>
+                style={{ color: t.accent, backgroundColor: t.accent + '15', borderColor: t.accent + '25' }}>🔥 Popular</span>
             )}
-            <h2 className="text-lg sm:text-xl font-serif font-black tracking-tight leading-tight" style={{ color: t.text }}>
-              {item.name}
-            </h2>
+            <h2 className="text-lg sm:text-xl font-serif font-black tracking-tight leading-tight" style={{ color: t.text }}>{item.name}</h2>
             <p className="text-[9px] sm:text-[10px] mt-0.5 truncate max-w-[220px]" style={{ color: t.muted }}>{item.description}</p>
             <span className="text-base sm:text-lg font-serif font-black mt-0.5" style={{ color: t.accent }}>{price} ETB</span>
           </div>
@@ -383,17 +425,8 @@ export function MenuHome() {
 
         {/* Food Cards Carousel */}
         <div className="flex-1 flex items-center justify-center relative mt-1 z-10 w-full overflow-hidden" ref={containerRef}>
-          <motion.div
-            drag="x"
-            dragConstraints={{
-              left: centeringOffset - (items.length - 1) * (cardWidth + gap) - 50,
-              right: centeringOffset + 50,
-            }}
-            dragElastic={0.25}
-            onDragEnd={handleCardDragEnd}
-            className="flex items-center absolute left-0"
-            style={{ gap, x: dragX }}
-          >
+          <motion.div drag="x" dragConstraints={{ left: centeringOffset - (items.length - 1) * (cardWidth + gap) - 50, right: centeringOffset + 50 }}
+            dragElastic={0.25} onDragEnd={handleCardDragEnd} className="flex items-center absolute left-0" style={{ gap, x: dragX }}>
             {items.map((menuItem, idx) => {
               const isActive = idx === currentIndex;
               const scale = isActive ? cardScale : 0.82 * (1 - progress);
@@ -402,41 +435,19 @@ export function MenuHome() {
               const opacity = (isActive ? 1 : 0.45) * (1 - progress);
               const rotate = isActive ? 0 : (idx < currentIndex ? -8 : 8);
               const isMostOrdered = MOST_ORDERED_IDS.has(menuItem.id);
-
               return (
-                <motion.div
-                  key={menuItem.id}
-                  style={{
-                    width: cardWidth,
-                    height: cardWidth,
-                    backgroundColor: isDarkImage(menuItem.coverImage) ? '#050505' : '#ffffff',
-                    borderColor: isDarkImage(menuItem.coverImage) ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-                    scale,
-                    y,
-                    borderRadius,
-                    opacity,
-                    rotate,
-                  }}
-                  className="menu-card relative overflow-hidden flex items-center justify-center p-3 shrink-0 shadow-2xl border transition-colors duration-300"
-                >
+                <motion.div key={menuItem.id}
+                  style={{ width: cardWidth, height: cardWidth, backgroundColor: isDarkImage(menuItem.coverImage) ? '#050505' : '#ffffff', borderColor: isDarkImage(menuItem.coverImage) ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', scale, y, borderRadius, opacity, rotate }}
+                  className="menu-card relative overflow-hidden flex items-center justify-center p-3 shrink-0 shadow-2xl border transition-colors duration-300">
                   <div className="w-full h-full relative flex items-center justify-center">
                     {menuItem.coverImage && (
-                      <img
-                        src={menuItem.coverImage}
-                        alt={menuItem.name}
-                        className="w-full h-full object-contain"
-                        decoding={isActive ? 'sync' : 'async'}
-                        fetchPriority={isActive ? 'high' : 'low'}
-                      />
+                      <img src={menuItem.coverImage} alt={menuItem.name} className="w-full h-full object-contain"
+                        decoding={isActive ? 'sync' : 'async'} fetchPriority={isActive ? 'high' : 'low'} />
                     )}
                   </div>
                   {isMostOrdered && (
-                    <span
-                      className="absolute top-2 left-2 text-[7px] sm:text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full z-10"
-                      style={{ backgroundColor: '#F5A623', color: '#ffffff' }}
-                    >
-                      🔥 Most Ordered
-                    </span>
+                    <span className="absolute top-2 left-2 text-[7px] sm:text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full z-10"
+                      style={{ backgroundColor: '#F5A623', color: '#ffffff' }}>🔥 Most Ordered</span>
                   )}
                 </motion.div>
               );
@@ -446,103 +457,79 @@ export function MenuHome() {
 
         {/* View Details Button */}
         <div className="mt-2 sm:mt-3 px-5 sm:px-6 z-10 relative" style={{ opacity: homeOpacity }}>
-          <button
-            onClick={() => {
-              const target = 1
-              animate(transitionProgress, target, { type: 'spring', stiffness: 200, damping: 28, mass: 0.8 })
-            }}
+          <button onClick={() => animate(transitionProgress, 1, { type: 'spring', stiffness: 200, damping: 28, mass: 0.8 })}
             onPointerDown={(e) => e.stopPropagation()}
             className="cta-shimmer w-full py-3 rounded-xl text-[11px] font-bold border-2 transition-all active:scale-95 flex items-center justify-center gap-2"
-            style={{
-              borderColor: t.accent,
-              backgroundColor: 'transparent',
-              color: t.accent,
-              backgroundImage: `linear-gradient(90deg, transparent 0%, rgba(245,166,35,0.08) 50%, transparent 100%)`,
-            }}
-          >
-            <span>What&apos;s Inside ✦</span>
-            <ChevronRight size={14} />
+            style={{ borderColor: t.accent, backgroundColor: 'transparent', color: t.accent, backgroundImage: `linear-gradient(90deg, transparent 0%, rgba(245,166,35,0.08) 50%, transparent 100%)` }}>
+            <span>What&apos;s Inside ✦</span><ChevronRight size={14} />
           </button>
         </div>
 
         {/* Nav */}
         <div className="flex justify-between items-center mt-2 sm:mt-3 mb-3 sm:mb-4 px-5 sm:px-6 z-10 relative pb-14" style={{ opacity: homeOpacity }}>
           <button onClick={() => go(-1)} onPointerDown={(e) => e.stopPropagation()} className="w-9 h-9 rounded-full border flex items-center justify-center hover:opacity-80 active:scale-90"
-            style={{ backgroundColor: t.accent + '08', borderColor: 'rgba(0,0,0,0.1)', color: t.accent }}>
-            <ChevronLeft size={16} />
-          </button>
-          <p className="text-[9px] sm:text-[10px] tracking-widest uppercase" style={{ color: t.muted + '60' }}>
-            {currentIndex + 1} / {items.length}
-          </p>
+            style={{ backgroundColor: t.accent + '08', borderColor: 'rgba(0,0,0,0.1)', color: t.accent }}><ChevronLeft size={16} /></button>
+          <p className="text-[9px] sm:text-[10px] tracking-widest uppercase" style={{ color: t.muted + '60' }}>{currentIndex + 1} / {items.length}</p>
           <button onClick={() => go(1)} onPointerDown={(e) => e.stopPropagation()} className="w-9 h-9 rounded-full border flex items-center justify-center hover:opacity-80 active:scale-90"
-            style={{ backgroundColor: t.accent + '08', borderColor: 'rgba(0,0,0,0.1)', color: t.accent }}>
-            <ChevronRight size={16} />
-          </button>
+            style={{ backgroundColor: t.accent + '08', borderColor: 'rgba(0,0,0,0.1)', color: t.accent }}><ChevronRight size={16} /></button>
         </div>
 
-        {/* Bottom Sheet — Explore Detail */}
+        {/* Bottom Sheet */}
         <div className="absolute bottom-0 left-0 right-0 z-30"
-          style={{
-            transform: `translateY(${bottomSheetY}%)`,
-            opacity: bottomSheetOpacity,
-            pointerEvents: bottomSheetOpacity > 0.5 ? 'auto' : 'none',
-          }}>
-          <div className="border-t rounded-t-[2.5rem] p-5 sm:p-7 transition-colors duration-300 overflow-y-auto h-[74vh] sm:h-[78vh] relative"
+          style={{ transform: `translateY(${bottomSheetY}%)`, opacity: bottomSheetOpacity, pointerEvents: bottomSheetOpacity > 0.5 ? 'auto' : 'none' }}>
+          <div className="border-t rounded-t-[2.5rem] transition-colors duration-300 overflow-y-auto h-[74vh] sm:h-[78vh] relative"
             style={{ backgroundColor: t.bg, borderColor: 'rgba(0,0,0,0.08)', boxShadow: '0 -12px 40px rgba(0,0,0,0.15)' }}>
-            
-            {/* Drag Handle Indicator */}
-            <div className="flex justify-center mb-3">
-              <div className="w-12 h-1 rounded-full bg-black/10" />
+
+            {/* Swipe-down handle */}
+            <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+              onPointerDown={handleDetailSwipeDown} onPointerMove={handleDetailSwipeMove} onPointerUp={handleDetailSwipeUp}>
+              <div className="flex flex-col items-center gap-1">
+                <ChevronDown size={16} style={{ color: t.muted + '40' }} />
+                <div className="w-12 h-1 rounded-full bg-black/10" />
+              </div>
             </div>
 
-            <div className="pb-24 sm:pb-32">
-                <div 
-                  className="mb-5 rounded-2xl overflow-hidden border shadow-sm flex items-center justify-center h-[220px] sm:h-[260px] relative transition-colors duration-300"
-                  style={{ 
-                    backgroundColor: isDarkImage(item.coverImage) ? '#000000' : '#ffffff', 
-                    borderColor: 'rgba(0,0,0,0.08)'
-                  }}
-                >
-                  {items.map((menuItem) => (
-                    menuItem.coverImage ? (
-                      <img
-                        key={menuItem.id}
-                        src={menuItem.coverImage}
-                        alt={menuItem.name}
-                        className="w-full h-full object-contain p-2 absolute inset-0"
-                        decoding={menuItem.id === item.id ? 'sync' : 'async'}
-                        fetchPriority={menuItem.id === item.id ? 'high' : 'low'}
-                        style={{
-                          opacity: menuItem.id === item.id ? 1 : 0,
-                          pointerEvents: menuItem.id === item.id ? 'auto' : 'none',
-                        }}
-                      />
-                    ) : null
-                  ))}
-                </div>
+            {/* Sticky Category Tabs inside detail */}
+            <div className="sticky top-0 z-20 flex gap-2 overflow-x-auto hide-scrollbar py-2 px-5 sm:px-6"
+              style={{ backgroundColor: t.bg, borderBottom: `1px solid ${t.accent}15` }}>
+              {CATEGORIES.map(cat => (
+                <button key={cat.key} onClick={() => handleCategoryChange(cat.key)} onPointerDown={(e) => e.stopPropagation()}
+                  className={`snap-start flex-shrink-0 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-[11px] font-bold transition-all active:scale-95 ${activeCategory === cat.key ? 'shadow-md' : ''}`}
+                  style={activeCategory === cat.key
+                    ? { backgroundColor: t.accent, color: '#ffffff' }
+                    : { backgroundColor: t.accent + '08', color: t.muted, border: `1px solid ${t.accent}15` }
+                  }>
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-5 sm:p-7 pb-24 sm:pb-32">
+              <div className="mb-5 rounded-2xl overflow-hidden border shadow-sm flex items-center justify-center h-[220px] sm:h-[260px] relative transition-colors duration-300"
+                style={{ backgroundColor: isDarkImage(item.coverImage) ? '#000000' : '#ffffff', borderColor: 'rgba(0,0,0,0.08)' }}>
+                {items.map((menuItem) => (
+                  menuItem.coverImage ? (
+                    <img key={menuItem.id} src={menuItem.coverImage} alt={menuItem.name}
+                      className="w-full h-full object-contain p-2 absolute inset-0"
+                      decoding={menuItem.id === item.id ? 'sync' : 'async'}
+                      fetchPriority={menuItem.id === item.id ? 'high' : 'low'}
+                      style={{ opacity: menuItem.id === item.id ? 1 : 0, pointerEvents: menuItem.id === item.id ? 'auto' : 'none' }} />
+                  ) : null
+                ))}
+              </div>
 
               <div className="mb-4 text-center">
                 <h2 className="text-xl sm:text-2xl font-serif font-black tracking-tight" style={{ color: t.text }}>{item.name}</h2>
                 <span className="text-xl sm:text-2xl font-serif font-black" style={{ color: t.accent }}>{price} ETB</span>
               </div>
 
-              {/* Ingredients List */}
               <div className="mb-5">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest mb-3 text-center" style={{ color: t.accent }}>
-                  Ingredients (Tap to see photo)
-                </h3>
+                <h3 className="text-[10px] font-bold uppercase tracking-widest mb-3 text-center" style={{ color: t.accent }}>Ingredients (Tap to see photo)</h3>
                 <div className="flex flex-wrap justify-center gap-2">
                   {item.ingredients.map((ing) => (
-                    <button
-                      key={ing}
-                      onClick={() => setSelectedIngredient(ing)}
+                    <button key={ing} onClick={() => setSelectedIngredient(ing)}
                       className="px-4 py-2 rounded-full text-[11px] font-bold border transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-sm animate-fade-in"
-                      style={{
-                        backgroundColor: t.accent + '05',
-                        color: t.text,
-                        borderColor: t.accent + '25',
-                      }}
-                    >
+                      style={{ backgroundColor: t.accent + '05', color: t.text, borderColor: t.accent + '25' }}>
                       <span className="text-xs">{getIngredientEmoji(ing)}</span>
                       <span>{capitalizeWords(ing)}</span>
                     </button>
@@ -557,87 +544,45 @@ export function MenuHome() {
                 </div>
               )}
             </div>
-
           </div>
         </div>
 
-        {/* Ingredient Detail Modal */}
+        {/* Ingredient Modal */}
         {selectedIngredient && (
-          <div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm cursor-pointer"
-            onClick={() => setSelectedIngredient(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm cursor-pointer" onClick={() => setSelectedIngredient(null)}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               className="relative w-full max-w-sm max-h-[85vh] rounded-[2rem] border overflow-hidden shadow-2xl p-5 cursor-default flex flex-col"
-              style={{ 
-                backgroundColor: '#ffffff', 
-                borderColor: 'rgba(0,0,0,0.1)' 
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button 
-                onClick={() => setSelectedIngredient(null)}
+              style={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)' }} onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => setSelectedIngredient(null)}
                 className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center border text-xs font-bold transition-all active:scale-90 z-10 cursor-pointer"
-                style={{ 
-                  borderColor: t.accent + '30', 
-                  color: t.accent, 
-                  backgroundColor: t.accent + '10' 
-                }}
-              >
-                ✕
-              </button>
-
+                style={{ borderColor: t.accent + '30', color: t.accent, backgroundColor: t.accent + '10' }}>✕</button>
               <div className="w-full h-40 sm:h-48 rounded-2xl overflow-hidden border mb-4 bg-black/5 flex items-center justify-center shrink-0">
-                <img 
-                  src={INGREDIENT_IMAGES[selectedIngredient.toLowerCase()] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'} 
-                  alt={selectedIngredient} 
-                  className="w-full h-full object-cover"
+                <SkeletonImage
+                  src={INGREDIENT_IMAGES[selectedIngredient.toLowerCase()] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'}
+                  alt={selectedIngredient}
+                  className="w-full h-full object-cover rounded-2xl"
                 />
               </div>
-
               <div className="text-center overflow-y-auto pr-1">
-                <h3 className="text-lg font-serif font-black tracking-tight mb-1" style={{ color: t.text }}>
-                  {capitalizeWords(selectedIngredient)}
-                </h3>
-                <p className="text-[10px] tracking-widest uppercase mb-2" style={{ color: t.accent }}>
-                  Fresh Ingredient
-                </p>
-                <p className="text-[11.5px] leading-relaxed" style={{ color: t.muted }}>
-                  This fresh {selectedIngredient} is premium-sourced, prepared daily, and forms an essential layer of flavor in our {item.name}.
-                </p>
+                <h3 className="text-lg font-serif font-black tracking-tight mb-1" style={{ color: t.text }}>{capitalizeWords(selectedIngredient)}</h3>
+                <p className="text-[10px] tracking-widest uppercase mb-2" style={{ color: t.accent }}>Fresh Ingredient</p>
+                <p className="text-[11.5px] leading-relaxed" style={{ color: t.muted }}>This fresh {selectedIngredient} is premium-sourced, prepared daily, and forms an essential layer of flavor in our {item.name}.</p>
               </div>
             </motion.div>
           </div>
         )}
 
-        {/* Location & Hours Modal */}
+        {/* Location Modal */}
         {showLocation && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm cursor-pointer"
-            onClick={() => setShowLocation(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm cursor-pointer" onClick={() => setShowLocation(false)}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               className="relative w-full max-w-sm rounded-[2rem] border overflow-hidden shadow-2xl cursor-default flex flex-col"
-              style={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setShowLocation(false)}
+              style={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)' }} onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => setShowLocation(false)}
                 className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center border text-xs font-bold transition-all active:scale-90 z-10 cursor-pointer"
-                style={{ borderColor: t.accent + '30', color: t.accent, backgroundColor: t.accent + '10' }}
-              >
-                ✕
-              </button>
-
+                style={{ borderColor: t.accent + '30', color: t.accent, backgroundColor: t.accent + '10' }}>✕</button>
               <div className="p-6">
-                <h2 className="text-xl font-bold tracking-tight mb-5" style={{ fontFamily: "'Playfair Display', Georgia, serif", color: t.accent }}>
-                  Find Us
-                </h2>
-
+                <h2 className="text-xl font-bold tracking-tight mb-5" style={{ fontFamily: "'Playfair Display', Georgia, serif", color: t.accent }}>Find Us</h2>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <span className="text-lg mt-0.5">📍</span>
@@ -646,7 +591,6 @@ export function MenuHome() {
                       <p className="text-[13px] leading-relaxed" style={{ color: '#3A3A3A' }}>Gerji, Near Unity University, Addis Ababa, Ethiopia</p>
                     </div>
                   </div>
-
                   <div className="flex items-start gap-3">
                     <span className="text-lg mt-0.5">🕐</span>
                     <div>
@@ -656,45 +600,19 @@ export function MenuHome() {
                     </div>
                   </div>
                 </div>
-
                 <div className="mt-5 space-y-2.5">
-                  <a
-                    href="https://maps.google.com/?q=Little+Canada+Cafe+Gerji+Unity+University+Addis+Ababa+Ethiopia"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <a href="https://maps.google.com/?q=Little+Canada+Cafe+Gerji+Unity+University+Addis+Ababa+Ethiopia" target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-[12px] font-bold border-2 transition-all active:scale-95"
-                    style={{ borderColor: t.accent, color: '#ffffff', backgroundColor: t.accent }}
-                  >
-                    📍 Open in Google Maps
-                  </a>
-                  <a
-                    href="tel:+251988984865"
+                    style={{ borderColor: t.accent, color: '#ffffff', backgroundColor: t.accent }}>📍 Open in Google Maps</a>
+                  <a href="tel:+251988984865"
                     className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-[12px] font-bold border-2 transition-all active:scale-95"
-                    style={{ borderColor: t.accent, color: t.accent, backgroundColor: t.accent + '08' }}
-                  >
-                    📞 Call Us
-                  </a>
+                    style={{ borderColor: t.accent, color: t.accent, backgroundColor: t.accent + '08' }}>📞 Call Us</a>
                 </div>
-
                 <div className="flex items-center justify-center gap-4 mt-5 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                  <a
-                    href="https://www.instagram.com/little_canada1?igsh=dWtobDk2NjM3MXp4"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] font-bold transition-all active:scale-95"
-                    style={{ color: t.accent }}
-                  >
-                    📷 @little_canada1
-                  </a>
-                  <a
-                    href="https://www.tiktok.com/@little.canada16?_r=1&_t=ZS-97YtRHUOwj3"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] font-bold transition-all active:scale-95"
-                    style={{ color: t.accent }}
-                  >
-                    🎵 @little.canada16
-                  </a>
+                  <a href="https://www.instagram.com/little_canada1?igsh=dWtobDk2NjM3MXp4" target="_blank" rel="noopener noreferrer"
+                    className="text-[11px] font-bold transition-all active:scale-95" style={{ color: t.accent }}>📷 @little_canada1</a>
+                  <a href="https://www.tiktok.com/@little.canada16?_r=1&_t=ZS-97YtRHUOwj3" target="_blank" rel="noopener noreferrer"
+                    className="text-[11px] font-bold transition-all active:scale-95" style={{ color: t.accent }}>🎵 @little.canada16</a>
                 </div>
               </div>
             </motion.div>
@@ -703,29 +621,12 @@ export function MenuHome() {
 
       </div>
 
-      {/* ─── Sticky Bottom Call Bar ─────────────────────────────────────────── */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-[999] flex items-center justify-between px-5"
-        style={{
-          height: '56px',
-          backgroundColor: '#0C0A09',
-          borderTop: '1px solid #F5A623',
-        }}
-      >
-        <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: '#666666' }}>
-          Little Canada Café
-        </span>
-        <a
-          href="tel:+251988984865"
-          className="flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold border transition-all active:scale-95"
-          style={{
-            borderColor: '#F5A623',
-            backgroundColor: '#F5A623',
-            color: '#0C0A09',
-          }}
-        >
-          📞 Call Now
-        </a>
+      {/* Sticky Bottom Call Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-[999] flex items-center justify-between px-5"
+        style={{ height: '56px', backgroundColor: '#0C0A09', borderTop: '1px solid #F5A623' }}>
+        <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: '#666666' }}>Little Canada Café</span>
+        <a href="tel:+251988984865" className="flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold border transition-all active:scale-95"
+          style={{ borderColor: '#F5A623', backgroundColor: '#F5A623', color: '#0C0A09' }}>📞 Call Now</a>
       </div>
     </div>
   )

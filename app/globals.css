@@ -79,3 +79,14 @@ canvas { touch-action: none; }
   animation: splash-fade-out 0.15s ease-out forwards;
   animation-delay: 0.5s;
 }
+
+/* ─── Skeleton Loading Pulse ──────────────────────────────────────────────── */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+.skeleton-pulse {
+  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.2s ease-in-out infinite, shimmer 1.5s ease-in-out infinite;
+}
