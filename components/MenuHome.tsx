@@ -311,6 +311,7 @@ export function MenuHome() {
             <div className="w-full h-full relative flex items-center justify-center">
               {item.coverImage && (
                 <img
+                  key={item.id}
                   src={`${item.coverImage}?v=lc-2`}
                   alt={item.name}
                   className="w-full h-full object-contain"
@@ -376,6 +377,7 @@ export function MenuHome() {
                   }}
                 >
                   <img
+                    key={item.id}
                     src={`${item.coverImage}?v=lc-2`}
                     alt={item.name}
                     className="w-full h-full object-contain p-2"
