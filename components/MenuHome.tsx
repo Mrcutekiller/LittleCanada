@@ -130,6 +130,7 @@ export function MenuHome() {
   const [selectedIngredient, setSelectedIngredient] = useState<string | null>(null)
   const [showSplash, setShowSplash] = useState(true)
   const [splashFading, setSplashFading] = useState(false)
+  const [showLocation, setShowLocation] = useState(false)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(360)
@@ -321,7 +322,16 @@ export function MenuHome() {
               Premium Café Experience
             </p>
           </div>
-          <div className="flex items-center gap-2" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowLocation(true)}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-full border transition-all active:scale-95 flex items-center gap-1"
+              style={{ color: t.accent, borderColor: t.accent + '30', backgroundColor: t.accent + '10' }}
+            >
+              📍 Gerji, Addis
+            </button>
+          </div>
         </div>
 
         {/* Back button */}
@@ -546,58 +556,6 @@ export function MenuHome() {
                   <p className="text-[11px] sm:text-[12px] leading-relaxed" style={{ color: t.muted }}>{item.funFact}</p>
                 </div>
               )}
-
-              {/* ─── Find Us Section ──────────────────────────────────────── */}
-              <div className="mt-8 rounded-2xl p-5 border-l-4" style={{ backgroundColor: '#141827', borderColor: t.accent }}>
-                <h3 className="text-lg font-bold tracking-tight mb-4" style={{ fontFamily: "'Playfair Display', Georgia, serif", color: t.accent }}>
-                  Find Us
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <span className="text-base mt-0.5">📍</span>
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>Address</p>
-                      <p className="text-[12px] leading-relaxed" style={{ color: '#A8A29E' }}>Addis Ababa, Ethiopia</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-base mt-0.5">🕐</span>
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>Hours</p>
-                      <p className="text-[12px] leading-relaxed" style={{ color: '#A8A29E' }}>Mon – Sun, 8:00 AM – 10:00 PM</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 pt-2">
-                    <a
-                      href="https://maps.google.com/?q=Little+Canada+Cafe+Addis+Ababa+Ethiopia"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold border transition-all active:scale-95"
-                      style={{ borderColor: t.accent, color: t.accent, backgroundColor: t.accent + '10' }}
-                    >
-                      📍 View on Google Maps
-                    </a>
-                    <a
-                      href="https://www.instagram.com/little_canada1?igsh=dWtobDk2NjM3MXp4"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold border transition-all active:scale-95"
-                      style={{ borderColor: t.accent, color: t.accent, backgroundColor: t.accent + '10' }}
-                    >
-                      📷 @little_canada1
-                    </a>
-                    <a
-                      href="https://www.tiktok.com/@little.canada16?_r=1&_t=ZS-97YtRHUOwj3"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold border transition-all active:scale-95"
-                      style={{ borderColor: t.accent, color: t.accent, backgroundColor: t.accent + '10' }}
-                    >
-                      🎵 @little.canada16
-                    </a>
-                  </div>
-                </div>
-              </div>
             </div>
 
           </div>
@@ -649,6 +607,95 @@ export function MenuHome() {
                 <p className="text-[11.5px] leading-relaxed" style={{ color: t.muted }}>
                   This fresh {selectedIngredient} is premium-sourced, prepared daily, and forms an essential layer of flavor in our {item.name}.
                 </p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Location & Hours Modal */}
+        {showLocation && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm cursor-pointer"
+            onClick={() => setShowLocation(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="relative w-full max-w-sm rounded-[2rem] border overflow-hidden shadow-2xl cursor-default flex flex-col"
+              style={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowLocation(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center border text-xs font-bold transition-all active:scale-90 z-10 cursor-pointer"
+                style={{ borderColor: t.accent + '30', color: t.accent, backgroundColor: t.accent + '10' }}
+              >
+                ✕
+              </button>
+
+              <div className="p-6">
+                <h2 className="text-xl font-bold tracking-tight mb-5" style={{ fontFamily: "'Playfair Display', Georgia, serif", color: t.accent }}>
+                  Find Us
+                </h2>
+
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-lg mt-0.5">📍</span>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>Address</p>
+                      <p className="text-[13px] leading-relaxed" style={{ color: '#3A3A3A' }}>Gerji, Near Unity University, Addis Ababa, Ethiopia</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <span className="text-lg mt-0.5">🕐</span>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>Hours</p>
+                      <p className="text-[13px] leading-relaxed" style={{ color: '#3A3A3A' }}>Mon – Sun</p>
+                      <p className="text-[13px] leading-relaxed font-bold" style={{ color: '#3A3A3A' }}>8:00 AM – 10:00 PM</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-2.5">
+                  <a
+                    href="https://maps.google.com/?q=Little+Canada+Cafe+Gerji+Unity+University+Addis+Ababa+Ethiopia"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-[12px] font-bold border-2 transition-all active:scale-95"
+                    style={{ borderColor: t.accent, color: '#ffffff', backgroundColor: t.accent }}
+                  >
+                    📍 Open in Google Maps
+                  </a>
+                  <a
+                    href="tel:+251988984865"
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-[12px] font-bold border-2 transition-all active:scale-95"
+                    style={{ borderColor: t.accent, color: t.accent, backgroundColor: t.accent + '08' }}
+                  >
+                    📞 Call Us
+                  </a>
+                </div>
+
+                <div className="flex items-center justify-center gap-4 mt-5 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <a
+                    href="https://www.instagram.com/little_canada1?igsh=dWtobDk2NjM3MXp4"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-bold transition-all active:scale-95"
+                    style={{ color: t.accent }}
+                  >
+                    📷 @little_canada1
+                  </a>
+                  <a
+                    href="https://www.tiktok.com/@little.canada16?_r=1&_t=ZS-97YtRHUOwj3"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-bold transition-all active:scale-95"
+                    style={{ color: t.accent }}
+                  >
+                    🎵 @little.canada16
+                  </a>
+                </div>
               </div>
             </motion.div>
           </div>
