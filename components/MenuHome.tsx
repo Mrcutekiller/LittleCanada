@@ -200,7 +200,7 @@ export function MenuHome() {
             menuItem.coverImage ? (
               <img
                 key={menuItem.id}
-                src={`${menuItem.coverImage}?v=lc-1`}
+                src={`${menuItem.coverImage}?v=lc-2`}
                 alt=""
                 loading="eager"
               />
@@ -311,7 +311,7 @@ export function MenuHome() {
             <div className="w-full h-full relative flex items-center justify-center">
               {item.coverImage && (
                 <img
-                  src={`${item.coverImage}?v=lc-1`}
+                  src={`${item.coverImage}?v=lc-2`}
                   alt={item.name}
                   className="w-full h-full object-contain"
                 />
@@ -371,7 +371,7 @@ export function MenuHome() {
                   }}
                 >
                   <img
-                    src={`${item.coverImage}?v=lc-1`}
+                    src={`${item.coverImage}?v=lc-2`}
                     alt={item.name}
                     className="w-full h-full object-contain p-2"
                   />
