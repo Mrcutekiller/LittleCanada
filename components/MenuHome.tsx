@@ -309,14 +309,20 @@ export function MenuHome() {
             className="relative w-[65vw] h-[65vw] max-w-[260px] max-h-[260px] sm:max-w-[290px] sm:max-h-[290px] rounded-[2rem] sm:rounded-[2.5rem] border shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing flex items-center justify-center p-3"
           >
             <div className="w-full h-full relative flex items-center justify-center">
-              {item.coverImage && (
-                <img
-                  key={item.id}
-                  src={`${item.coverImage}?v=lc-2`}
-                  alt={item.name}
-                  className="w-full h-full object-contain"
-                />
-              )}
+              {items.map((menuItem) => (
+                menuItem.coverImage ? (
+                  <img
+                    key={menuItem.id}
+                    src={`${menuItem.coverImage}?v=lc-2`}
+                    alt={menuItem.name}
+                    className="w-full h-full object-contain absolute inset-0 transition-opacity duration-200 ease-in-out"
+                    style={{
+                      opacity: menuItem.id === item.id ? 1 : 0,
+                      pointerEvents: menuItem.id === item.id ? 'auto' : 'none',
+                    }}
+                  />
+                ) : null
+              ))}
             </div>
           </motion.div>
         </div>
@@ -368,7 +374,6 @@ export function MenuHome() {
             </div>
 
             <div className="pb-24 sm:pb-32">
-              {item.coverImage && (
                 <div 
                   className="mb-5 rounded-2xl overflow-hidden border shadow-sm flex items-center justify-center h-[220px] sm:h-[260px] relative transition-colors duration-300"
                   style={{ 
@@ -376,14 +381,21 @@ export function MenuHome() {
                     borderColor: 'rgba(0,0,0,0.08)'
                   }}
                 >
-                  <img
-                    key={item.id}
-                    src={`${item.coverImage}?v=lc-2`}
-                    alt={item.name}
-                    className="w-full h-full object-contain p-2"
-                  />
+                  {items.map((menuItem) => (
+                    menuItem.coverImage ? (
+                      <img
+                        key={menuItem.id}
+                        src={`${menuItem.coverImage}?v=lc-2`}
+                        alt={menuItem.name}
+                        className="w-full h-full object-contain p-2 absolute inset-0 transition-opacity duration-200 ease-in-out"
+                        style={{
+                          opacity: menuItem.id === item.id ? 1 : 0,
+                          pointerEvents: menuItem.id === item.id ? 'auto' : 'none',
+                        }}
+                      />
+                    ) : null
+                  ))}
                 </div>
-              )}
 
               <div className="mb-4 text-center">
                 <h2 className="text-xl sm:text-2xl font-serif font-black tracking-tight" style={{ color: t.text }}>{item.name}</h2>
