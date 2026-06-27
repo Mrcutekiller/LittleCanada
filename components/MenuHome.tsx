@@ -193,6 +193,30 @@ export function MenuHome() {
     >
       <div className="max-w-lg mx-auto min-h-screen relative flex flex-col overflow-hidden transition-colors duration-300" style={{ backgroundColor: t.bg }}>
 
+        {/* Background Image Preloader for instant transitions */}
+        <div style={{ display: 'none', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }} aria-hidden="true">
+          {/* Preload cover images for active category */}
+          {items.map((menuItem) => (
+            menuItem.coverImage ? (
+              <img
+                key={menuItem.id}
+                src={`${menuItem.coverImage}?v=lc-1`}
+                alt=""
+                loading="eager"
+              />
+            ) : null
+          ))}
+          {/* Preload all ingredient modal images */}
+          {Object.values(INGREDIENT_IMAGES).map((url) => (
+            <img
+              key={url}
+              src={url}
+              alt=""
+              loading="lazy"
+            />
+          ))}
+        </div>
+
         {/* Header */}
         <div className="flex justify-between items-center p-5 sm:p-6 pb-0 z-10 relative"
           style={{ opacity: homeOpacity }}>
