@@ -185,13 +185,13 @@ export function MenuHome() {
 
   return (
     <div
-      className="min-h-screen font-sans transition-colors duration-300"
+      className="h-[100dvh] max-h-[100dvh] overflow-hidden font-sans transition-colors duration-300"
       style={{ backgroundColor: t.bg, color: t.text }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      <div className="max-w-lg mx-auto min-h-screen relative flex flex-col overflow-hidden transition-colors duration-300" style={{ backgroundColor: t.bg }}>
+      <div className="max-w-lg mx-auto h-[100dvh] max-h-[100dvh] relative flex flex-col overflow-hidden transition-colors duration-300" style={{ backgroundColor: t.bg }}>
 
         {/* Background Image Preloader for instant transitions */}
         <div style={{ display: 'none', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }} aria-hidden="true">
@@ -218,7 +218,7 @@ export function MenuHome() {
         </div>
 
         {/* Header */}
-        <div className="flex justify-between items-center p-5 sm:p-6 pb-0 z-10 relative"
+        <div className="flex justify-between items-center p-4 sm:p-5 pb-0 z-10 relative"
           style={{ opacity: homeOpacity }}>
           <div>
             <h1 className="text-xl sm:text-2xl font-serif font-black tracking-tight" style={{ color: t.accent }}>
@@ -251,7 +251,7 @@ export function MenuHome() {
         </div>
 
         {/* Categories */}
-        <div className="flex gap-2 overflow-x-auto hide-scrollbar py-2 mt-3 px-5 sm:px-6 z-10 relative snap-x"
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar py-2 mt-2 sm:mt-3 px-5 sm:px-6 z-10 relative snap-x"
           style={{ opacity: homeOpacity }}>
           {CATEGORIES.map(cat => (
             <button key={cat.key} onClick={() => handleCategoryChange(cat.key)}
@@ -269,7 +269,7 @@ export function MenuHome() {
         </div>
 
         {/* Food Name */}
-        <div className="text-center mt-3 mb-1 min-h-[60px] flex flex-col items-center justify-center z-10 relative px-5">
+        <div className="text-center mt-2 sm:mt-3 mb-1 min-h-[50px] sm:min-h-[60px] flex flex-col items-center justify-center z-10 relative px-5">
           <div className="flex flex-col items-center" style={{ opacity: homeOpacity }}>
             {item.popular && (
               <span className="text-[7px] sm:text-[8px] font-black tracking-widest uppercase mb-1 px-2 py-0.5 rounded-full border"
@@ -306,7 +306,7 @@ export function MenuHome() {
               y: cardY,
               borderRadius: cardRadius,
             }}
-            className="relative w-full max-w-[280px] sm:max-w-[300px] h-[280px] sm:h-[320px] rounded-[2rem] sm:rounded-[2.5rem] border shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing flex items-center justify-center p-3"
+            className="relative w-[65vw] h-[65vw] max-w-[260px] max-h-[260px] sm:max-w-[290px] sm:max-h-[290px] rounded-[2rem] sm:rounded-[2.5rem] border shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing flex items-center justify-center p-3"
           >
             <div className="w-full h-full relative flex items-center justify-center">
               {item.coverImage && (
@@ -321,7 +321,7 @@ export function MenuHome() {
         </div>
 
         {/* View Details Button */}
-        <div className="mt-3 px-5 sm:px-6 z-10 relative" style={{ opacity: homeOpacity }}>
+        <div className="mt-2 sm:mt-3 px-5 sm:px-6 z-10 relative" style={{ opacity: homeOpacity }}>
           <button
             onClick={() => {
               const target = 1
@@ -337,7 +337,7 @@ export function MenuHome() {
         </div>
 
         {/* Nav */}
-        <div className="flex justify-between items-center mt-3 mb-4 px-5 sm:px-6 z-10 relative" style={{ opacity: homeOpacity }}>
+        <div className="flex justify-between items-center mt-2 sm:mt-3 mb-3 sm:mb-4 px-5 sm:px-6 z-10 relative" style={{ opacity: homeOpacity }}>
           <button onClick={() => go(-1)} onPointerDown={(e) => e.stopPropagation()} className="w-9 h-9 rounded-full border flex items-center justify-center hover:opacity-80 active:scale-90"
             style={{ backgroundColor: t.accent + '08', borderColor: 'rgba(0,0,0,0.1)', color: t.accent }}>
             <ChevronLeft size={16} />
@@ -358,9 +358,14 @@ export function MenuHome() {
             opacity: bottomSheetOpacity,
             pointerEvents: bottomSheetOpacity > 0.5 ? 'auto' : 'none',
           }}>
-          <div className="border-t rounded-t-[2.5rem] p-6 sm:p-7 transition-colors duration-300 overflow-y-auto h-[78vh] sm:h-[82vh]"
+          <div className="border-t rounded-t-[2.5rem] p-5 sm:p-7 transition-colors duration-300 overflow-y-auto h-[78vh] sm:h-[82vh] relative"
             style={{ backgroundColor: t.bg, borderColor: 'rgba(0,0,0,0.08)', boxShadow: '0 -12px 40px rgba(0,0,0,0.15)' }}>
             
+            {/* Drag Handle Indicator */}
+            <div className="flex justify-center mb-3">
+              <div className="w-12 h-1 rounded-full bg-black/10" />
+            </div>
+
             <div className="pb-24 sm:pb-32">
               {item.coverImage && (
                 <div 
@@ -427,7 +432,7 @@ export function MenuHome() {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="relative w-full max-w-sm rounded-[2rem] border overflow-hidden shadow-2xl p-5 cursor-default"
+              className="relative w-full max-w-sm max-h-[85vh] rounded-[2rem] border overflow-hidden shadow-2xl p-5 cursor-default flex flex-col"
               style={{ 
                 backgroundColor: '#ffffff', 
                 borderColor: 'rgba(0,0,0,0.1)' 
@@ -448,7 +453,7 @@ export function MenuHome() {
               </button>
 
               {/* Ingredient Image */}
-              <div className="w-full h-48 rounded-2xl overflow-hidden border mb-4 bg-black/5 flex items-center justify-center">
+              <div className="w-full h-40 sm:h-48 rounded-2xl overflow-hidden border mb-4 bg-black/5 flex items-center justify-center shrink-0">
                 <img 
                   src={INGREDIENT_IMAGES[selectedIngredient.toLowerCase()] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'} 
                   alt={selectedIngredient} 
@@ -457,7 +462,7 @@ export function MenuHome() {
               </div>
 
               {/* Text */}
-              <div className="text-center">
+              <div className="text-center overflow-y-auto pr-1">
                 <h3 className="text-lg font-serif font-black tracking-tight mb-1" style={{ color: t.text }}>
                   {capitalizeWords(selectedIngredient)}
                 </h3>
