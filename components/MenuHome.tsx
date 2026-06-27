@@ -158,13 +158,15 @@ export function MenuHome() {
       Object.values(MENU).flat().forEach((menuItem) => {
         if (menuItem.coverImage) {
           const img = new Image()
-          img.src = `${menuItem.coverImage}?v=lc-2`
+          img.src = menuItem.coverImage
+          img.decoding = 'sync'
         }
       })
 
       Object.values(INGREDIENT_IMAGES).forEach((url) => {
         const img = new Image()
         img.src = url
+        img.decoding = 'sync'
       })
     }
   }, [])
@@ -294,9 +296,11 @@ export function MenuHome() {
             menuItem.coverImage ? (
               <img
                 key={menuItem.id}
-                src={`${menuItem.coverImage}?v=lc-2`}
+                src={menuItem.coverImage}
                 alt=""
                 loading="eager"
+                fetchPriority="high"
+                decoding="sync"
               />
             ) : null
           ))}
@@ -412,9 +416,11 @@ export function MenuHome() {
                   <div className="w-full h-full relative flex items-center justify-center">
                     {menuItem.coverImage && (
                       <img
-                        src={`${menuItem.coverImage}?v=lc-2`}
+                        src={menuItem.coverImage}
                         alt={menuItem.name}
                         className="w-full h-full object-contain"
+                        fetchPriority="high"
+                        decoding="sync"
                       />
                     )}
                   </div>
@@ -495,9 +501,11 @@ export function MenuHome() {
                     menuItem.coverImage ? (
                       <img
                         key={menuItem.id}
-                        src={`${menuItem.coverImage}?v=lc-2`}
+                        src={menuItem.coverImage}
                         alt={menuItem.name}
-                        className="w-full h-full object-contain p-2 absolute inset-0 transition-opacity duration-75"
+                        className="w-full h-full object-contain p-2 absolute inset-0"
+                        fetchPriority={menuItem.id === item.id ? 'high' : 'low'}
+                        decoding="sync"
                         style={{
                           opacity: menuItem.id === item.id ? 1 : 0,
                           pointerEvents: menuItem.id === item.id ? 'auto' : 'none',
@@ -574,13 +582,22 @@ export function MenuHome() {
                       📍 View on Google Maps
                     </a>
                     <a
-                      href="https://www.instagram.com/littlecanada"
+                      href="https://www.instagram.com/little_canada1?igsh=dWtobDk2NjM3MXp4"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold border transition-all active:scale-95"
                       style={{ borderColor: t.accent, color: t.accent, backgroundColor: t.accent + '10' }}
                     >
-                      📷 @littlecanada
+                      📷 @little_canada1
+                    </a>
+                    <a
+                      href="https://www.tiktok.com/@little.canada16?_r=1&_t=ZS-97YtRHUOwj3"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold border transition-all active:scale-95"
+                      style={{ borderColor: t.accent, color: t.accent, backgroundColor: t.accent + '10' }}
+                    >
+                      🎵 @little.canada16
                     </a>
                   </div>
                 </div>

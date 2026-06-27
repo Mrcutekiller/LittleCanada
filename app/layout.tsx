@@ -32,6 +32,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`bg-[#0C0A09] text-[#F5F5F4] ${inter.variable} ${playfair.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://images.unsplash.com" />
+      </head>
       <body className={`${inter.className} antialiased`}>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
