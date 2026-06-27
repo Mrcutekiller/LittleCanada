@@ -195,8 +195,8 @@ export function MenuHome() {
 
         {/* Background Image Preloader for instant transitions */}
         <div style={{ display: 'none', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }} aria-hidden="true">
-          {/* Preload cover images for active category */}
-          {items.map((menuItem) => (
+          {/* Preload cover images for all menu items globally */}
+          {Object.values(MENU).flat().map((menuItem) => (
             menuItem.coverImage ? (
               <img
                 key={menuItem.id}
@@ -315,7 +315,7 @@ export function MenuHome() {
                     key={menuItem.id}
                     src={`${menuItem.coverImage}?v=lc-2`}
                     alt={menuItem.name}
-                    className="w-full h-full object-contain absolute inset-0 transition-opacity duration-200 ease-in-out"
+                    className="w-full h-full object-contain absolute inset-0 transition-opacity duration-75"
                     style={{
                       opacity: menuItem.id === item.id ? 1 : 0,
                       pointerEvents: menuItem.id === item.id ? 'auto' : 'none',
@@ -387,7 +387,7 @@ export function MenuHome() {
                         key={menuItem.id}
                         src={`${menuItem.coverImage}?v=lc-2`}
                         alt={menuItem.name}
-                        className="w-full h-full object-contain p-2 absolute inset-0 transition-opacity duration-200 ease-in-out"
+                        className="w-full h-full object-contain p-2 absolute inset-0 transition-opacity duration-75"
                         style={{
                           opacity: menuItem.id === item.id ? 1 : 0,
                           pointerEvents: menuItem.id === item.id ? 'auto' : 'none',
