@@ -127,6 +127,22 @@ export function MenuHome() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedIngredient, setSelectedIngredient] = useState<string | null>(null)
 
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerWidth, setContainerWidth] = useState(360)
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setContainerWidth(containerRef.current.offsetWidth)
+    }
+    const handleResize = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const {
     transitionProgress,
     goToHome,
@@ -142,7 +158,6 @@ export function MenuHome() {
   }, [transitionProgress])
 
   const dragX = useMotionValue(0)
-  const rotateY = useTransform(dragX, [-300, 300], [-30, 30])
 
   const items = useMemo(() => MENU[activeCategory], [activeCategory])
   const item = items[currentIndex] ?? items[0]
@@ -161,12 +176,27 @@ export function MenuHome() {
     setCurrentIndex(0)
   }
 
-  const handleCardDragEnd = useCallback((_: any, info: { offset: { x: number } }) => {
-    if (Math.abs(info.offset.x) > 60) {
-      go(info.offset.x > 0 ? -1 : 1)
+  const cardWidth = containerWidth > 480 ? 270 : 230
+  const gap = 16
+  const centeringOffset = (containerWidth - cardWidth) / 2
+  const targetX = centeringOffset - currentIndex * (cardWidth + gap)
+
+  useEffect(() => {
+    animate(dragX, targetX, { type: 'spring', stiffness: 280, damping: 28 })
+  }, [currentIndex, targetX, dragX])
+
+  const handleCardDragEnd = useCallback((_: any, info: { offset: { x: number }; velocity: { x: number } }) => {
+    const swipe = info.offset.x
+    const velocity = info.velocity.x
+    
+    if (swipe < -60 || velocity < -500) {
+      go(1)
+    } else if (swipe > 60 || velocity > 500) {
+      go(-1)
+    } else {
+      animate(dragX, targetX, { type: 'spring', stiffness: 280, damping: 28 })
     }
-    animate(dragX, 0, { type: 'spring', stiffness: 500, damping: 40 })
-  }, [go, dragX])
+  }, [go, dragX, targetX])
 
   const handleBack = useCallback(() => {
     goToHome()
@@ -285,45 +315,57 @@ export function MenuHome() {
           </div>
         </div>
 
-        {/* Food Card */}
-        <div className="flex-1 flex items-center justify-center relative mt-1 z-10">
+        {/* Food Cards Carousel */}
+        <div className="flex-1 flex items-center justify-center relative mt-1 z-10 w-full overflow-hidden" ref={containerRef}>
           <motion.div
             drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
+            dragConstraints={{
+              left: centeringOffset - (items.length - 1) * (cardWidth + gap) - 50,
+              right: centeringOffset + 50,
+            }}
             dragElastic={0.25}
             onDragEnd={handleCardDragEnd}
-            style={{
-              backgroundColor: isDarkImage(item.coverImage)
-                ? '#050505'
-                : '#ffffff',
-              borderColor: isDarkImage(item.coverImage)
-                ? 'rgba(255,255,255,0.08)'
-                : 'rgba(0,0,0,0.08)',
-              x: dragX,
-              rotateY,
-              transformPerspective: 900,
-              scale: cardScale,
-              y: cardY,
-              borderRadius: cardRadius,
-            }}
-            className="relative w-[65vw] h-[65vw] max-w-[260px] max-h-[260px] sm:max-w-[290px] sm:max-h-[290px] rounded-[2rem] sm:rounded-[2.5rem] border shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing flex items-center justify-center p-3"
+            className="flex items-center absolute left-0"
+            style={{ gap, x: dragX }}
           >
-            <div className="w-full h-full relative flex items-center justify-center">
-              {items.map((menuItem) => (
-                menuItem.coverImage ? (
-                  <img
-                    key={menuItem.id}
-                    src={`${menuItem.coverImage}?v=lc-2`}
-                    alt={menuItem.name}
-                    className="w-full h-full object-contain absolute inset-0 transition-opacity duration-75"
-                    style={{
-                      opacity: menuItem.id === item.id ? 1 : 0,
-                      pointerEvents: menuItem.id === item.id ? 'auto' : 'none',
-                    }}
-                  />
-                ) : null
-              ))}
-            </div>
+            {items.map((menuItem, idx) => {
+              const isActive = idx === currentIndex;
+              
+              // Define local animations for each card based on active state and progress
+              const scale = isActive ? cardScale : 0.82 * (1 - progress);
+              const y = isActive ? cardY : 8;
+              const borderRadius = isActive ? cardRadius : 32;
+              const opacity = (isActive ? 1 : 0.45) * (1 - progress);
+              const rotate = isActive ? 0 : (idx < currentIndex ? -8 : 8);
+
+              return (
+                <motion.div
+                  key={menuItem.id}
+                  style={{
+                    width: cardWidth,
+                    height: cardWidth,
+                    backgroundColor: isDarkImage(menuItem.coverImage) ? '#050505' : '#ffffff',
+                    borderColor: isDarkImage(menuItem.coverImage) ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                    scale,
+                    y,
+                    borderRadius,
+                    opacity,
+                    rotate,
+                  }}
+                  className="relative overflow-hidden flex items-center justify-center p-3 shrink-0 shadow-2xl border transition-colors duration-300"
+                >
+                  <div className="w-full h-full relative flex items-center justify-center">
+                    {menuItem.coverImage && (
+                      <img
+                        src={`${menuItem.coverImage}?v=lc-2`}
+                        alt={menuItem.name}
+                        className="w-full h-full object-contain"
+                      />
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
 
