@@ -6,6 +6,8 @@ import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react'
 import { MENU, CATEGORIES, type CategoryKey } from '@/lib/menu-data'
 import { useScrollTransition, interpolate } from '@/hooks/useScrollTransition'
 
+const MOST_ORDERED_IDS = new Set(['b1', 'b5', 'p1'])
+
 function isDarkImage(imgSrc?: string): boolean {
   if (!imgSrc) return false
   const darkImages = ['Fried Chicken Burger', 'Half Half Burger', 'L.C Special Burger']
@@ -18,7 +20,7 @@ const t = {
   text: '#0A0A0A',
   muted: '#666666',
   border: 'rgba(0,0,0,0.1)',
-  accent: '#D4AF37',
+  accent: '#F5A623',
   surface: 'bg-black/5'
 }
 
@@ -126,9 +128,17 @@ export function MenuHome() {
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('burgers')
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedIngredient, setSelectedIngredient] = useState<string | null>(null)
+  const [showSplash, setShowSplash] = useState(true)
+  const [splashFading, setSplashFading] = useState(false)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(360)
+
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setSplashFading(true), 1400)
+    const hideTimer = setTimeout(() => setShowSplash(false), 1800)
+    return () => { clearTimeout(fadeTimer); clearTimeout(hideTimer) }
+  }, [])
 
   useEffect(() => {
     if (containerRef.current) {
@@ -143,10 +153,8 @@ export function MenuHome() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Programmatic global preloader for instant asset load
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Eagerly preload all cover images
       Object.values(MENU).flat().forEach((menuItem) => {
         if (menuItem.coverImage) {
           const img = new Image()
@@ -154,7 +162,6 @@ export function MenuHome() {
         }
       })
 
-      // Eagerly preload all ingredient images
       Object.values(INGREDIENT_IMAGES).forEach((url) => {
         const img = new Image()
         img.src = url
@@ -240,9 +247,36 @@ export function MenuHome() {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
+      {/* ─── Loading Splash Screen ────────────────────────────────────────── */}
+      {showSplash && (
+        <div
+          className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center ${splashFading ? 'splash-screen' : ''}`}
+          style={{ backgroundColor: '#0C0A09' }}
+        >
+          <h1
+            className="text-[60px] font-bold tracking-tight"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#F5A623' }}
+          >
+            LC
+          </h1>
+          <p className="text-[11px] tracking-widest uppercase mt-1" style={{ color: '#666666' }}>
+            Premium Café Experience
+          </p>
+          <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ backgroundColor: 'rgba(245,166,35,0.15)' }}>
+            <div
+              className="h-full"
+              style={{
+                backgroundColor: '#F5A623',
+                animation: 'splash-progress 1.4s ease-out forwards',
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="max-w-lg mx-auto h-[100dvh] max-h-[100dvh] relative flex flex-col overflow-hidden transition-colors duration-300" style={{ backgroundColor: t.bg }}>
 
-        {/* Background Image Preloader for instant transitions (offscreen to force browser layout and eager decoding) */}
+        {/* Background Image Preloader */}
         <div 
           style={{ 
             position: 'absolute', 
@@ -256,7 +290,6 @@ export function MenuHome() {
           }} 
           aria-hidden="true"
         >
-          {/* Preload cover images for all menu items globally */}
           {Object.values(MENU).flat().map((menuItem) => (
             menuItem.coverImage ? (
               <img
@@ -267,7 +300,6 @@ export function MenuHome() {
               />
             ) : null
           ))}
-          {/* Preload all ingredient modal images */}
           {Object.entries(INGREDIENT_IMAGES).map(([name, url]) => (
             <img
               key={name}
@@ -289,14 +321,7 @@ export function MenuHome() {
               Premium Café Experience
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <a href="tel:+251988984865"
-              onPointerDown={(e) => e.stopPropagation()}
-              className="text-[10px] font-bold px-3 py-1.5 rounded-full border transition-all active:scale-95"
-              style={{ color: t.accent, borderColor: t.accent + '30', backgroundColor: t.accent + '10' }}>
-              📞 Call
-            </a>
-          </div>
+          <div className="flex items-center gap-2" />
         </div>
 
         {/* Back button */}
@@ -342,7 +367,7 @@ export function MenuHome() {
               {item.name}
             </h2>
             <p className="text-[9px] sm:text-[10px] mt-0.5 truncate max-w-[220px]" style={{ color: t.muted }}>{item.description}</p>
-            <span className="text-base sm:text-lg font-black mt-0.5" style={{ color: t.accent }}>{price} ETB</span>
+            <span className="text-base sm:text-lg font-serif font-black mt-0.5" style={{ color: t.accent }}>{price} ETB</span>
           </div>
         </div>
 
@@ -361,13 +386,12 @@ export function MenuHome() {
           >
             {items.map((menuItem, idx) => {
               const isActive = idx === currentIndex;
-              
-              // Define local animations for each card based on active state and progress
               const scale = isActive ? cardScale : 0.82 * (1 - progress);
               const y = isActive ? cardY : 8;
               const borderRadius = isActive ? cardRadius : 32;
               const opacity = (isActive ? 1 : 0.45) * (1 - progress);
               const rotate = isActive ? 0 : (idx < currentIndex ? -8 : 8);
+              const isMostOrdered = MOST_ORDERED_IDS.has(menuItem.id);
 
               return (
                 <motion.div
@@ -383,7 +407,7 @@ export function MenuHome() {
                     opacity,
                     rotate,
                   }}
-                  className="relative overflow-hidden flex items-center justify-center p-3 shrink-0 shadow-2xl border transition-colors duration-300"
+                  className="menu-card relative overflow-hidden flex items-center justify-center p-3 shrink-0 shadow-2xl border transition-colors duration-300"
                 >
                   <div className="w-full h-full relative flex items-center justify-center">
                     {menuItem.coverImage && (
@@ -394,6 +418,14 @@ export function MenuHome() {
                       />
                     )}
                   </div>
+                  {isMostOrdered && (
+                    <span
+                      className="absolute top-2 left-2 text-[7px] sm:text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full z-10"
+                      style={{ backgroundColor: '#F5A623', color: '#ffffff' }}
+                    >
+                      🔥 Most Ordered
+                    </span>
+                  )}
                 </motion.div>
               );
             })}
@@ -408,16 +440,21 @@ export function MenuHome() {
               animate(transitionProgress, target, { type: 'spring', stiffness: 200, damping: 28, mass: 0.8 })
             }}
             onPointerDown={(e) => e.stopPropagation()}
-            className="w-full py-3 rounded-xl text-[11px] font-bold border transition-all active:scale-95 flex items-center justify-center gap-2"
-            style={{ borderColor: t.accent + '40', backgroundColor: t.accent + '12', color: t.accent }}
+            className="cta-shimmer w-full py-3 rounded-xl text-[11px] font-bold border-2 transition-all active:scale-95 flex items-center justify-center gap-2"
+            style={{
+              borderColor: t.accent,
+              backgroundColor: 'transparent',
+              color: t.accent,
+              backgroundImage: `linear-gradient(90deg, transparent 0%, rgba(245,166,35,0.08) 50%, transparent 100%)`,
+            }}
           >
-            <span>Explore This Item</span>
+            <span>What&apos;s Inside ✦</span>
             <ChevronRight size={14} />
           </button>
         </div>
 
         {/* Nav */}
-        <div className="flex justify-between items-center mt-2 sm:mt-3 mb-3 sm:mb-4 px-5 sm:px-6 z-10 relative" style={{ opacity: homeOpacity }}>
+        <div className="flex justify-between items-center mt-2 sm:mt-3 mb-3 sm:mb-4 px-5 sm:px-6 z-10 relative pb-14" style={{ opacity: homeOpacity }}>
           <button onClick={() => go(-1)} onPointerDown={(e) => e.stopPropagation()} className="w-9 h-9 rounded-full border flex items-center justify-center hover:opacity-80 active:scale-90"
             style={{ backgroundColor: t.accent + '08', borderColor: 'rgba(0,0,0,0.1)', color: t.accent }}>
             <ChevronLeft size={16} />
@@ -438,7 +475,7 @@ export function MenuHome() {
             opacity: bottomSheetOpacity,
             pointerEvents: bottomSheetOpacity > 0.5 ? 'auto' : 'none',
           }}>
-          <div className="border-t rounded-t-[2.5rem] p-5 sm:p-7 transition-colors duration-300 overflow-y-auto h-[78vh] sm:h-[82vh] relative"
+          <div className="border-t rounded-t-[2.5rem] p-5 sm:p-7 transition-colors duration-300 overflow-y-auto h-[74vh] sm:h-[78vh] relative"
             style={{ backgroundColor: t.bg, borderColor: 'rgba(0,0,0,0.08)', boxShadow: '0 -12px 40px rgba(0,0,0,0.15)' }}>
             
             {/* Drag Handle Indicator */}
@@ -472,7 +509,7 @@ export function MenuHome() {
 
               <div className="mb-4 text-center">
                 <h2 className="text-xl sm:text-2xl font-serif font-black tracking-tight" style={{ color: t.text }}>{item.name}</h2>
-                <span className="text-xl sm:text-2xl font-black" style={{ color: t.accent }}>{price} ETB</span>
+                <span className="text-xl sm:text-2xl font-serif font-black" style={{ color: t.accent }}>{price} ETB</span>
               </div>
 
               {/* Ingredients List */}
@@ -505,6 +542,49 @@ export function MenuHome() {
                   <p className="text-[11px] sm:text-[12px] leading-relaxed" style={{ color: t.muted }}>{item.funFact}</p>
                 </div>
               )}
+
+              {/* ─── Find Us Section ──────────────────────────────────────── */}
+              <div className="mt-8 rounded-2xl p-5 border-l-4" style={{ backgroundColor: '#141827', borderColor: t.accent }}>
+                <h3 className="text-lg font-bold tracking-tight mb-4" style={{ fontFamily: "'Playfair Display', Georgia, serif", color: t.accent }}>
+                  Find Us
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <span className="text-base mt-0.5">📍</span>
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>Address</p>
+                      <p className="text-[12px] leading-relaxed" style={{ color: '#A8A29E' }}>Addis Ababa, Ethiopia</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="text-base mt-0.5">🕐</span>
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>Hours</p>
+                      <p className="text-[12px] leading-relaxed" style={{ color: '#A8A29E' }}>Mon – Sun, 8:00 AM – 10:00 PM</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 pt-2">
+                    <a
+                      href="https://maps.google.com/?q=Little+Canada+Cafe+Addis+Ababa+Ethiopia"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold border transition-all active:scale-95"
+                      style={{ borderColor: t.accent, color: t.accent, backgroundColor: t.accent + '10' }}
+                    >
+                      📍 View on Google Maps
+                    </a>
+                    <a
+                      href="https://www.instagram.com/littlecanada"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold border transition-all active:scale-95"
+                      style={{ borderColor: t.accent, color: t.accent, backgroundColor: t.accent + '10' }}
+                    >
+                      📷 @littlecanada
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -526,7 +606,6 @@ export function MenuHome() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close Button */}
               <button 
                 onClick={() => setSelectedIngredient(null)}
                 className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center border text-xs font-bold transition-all active:scale-90 z-10 cursor-pointer"
@@ -539,7 +618,6 @@ export function MenuHome() {
                 ✕
               </button>
 
-              {/* Ingredient Image */}
               <div className="w-full h-40 sm:h-48 rounded-2xl overflow-hidden border mb-4 bg-black/5 flex items-center justify-center shrink-0">
                 <img 
                   src={INGREDIENT_IMAGES[selectedIngredient.toLowerCase()] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'} 
@@ -548,7 +626,6 @@ export function MenuHome() {
                 />
               </div>
 
-              {/* Text */}
               <div className="text-center overflow-y-auto pr-1">
                 <h3 className="text-lg font-serif font-black tracking-tight mb-1" style={{ color: t.text }}>
                   {capitalizeWords(selectedIngredient)}
@@ -564,6 +641,31 @@ export function MenuHome() {
           </div>
         )}
 
+      </div>
+
+      {/* ─── Sticky Bottom Call Bar ─────────────────────────────────────────── */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-[999] flex items-center justify-between px-5"
+        style={{
+          height: '56px',
+          backgroundColor: '#0C0A09',
+          borderTop: '1px solid #F5A623',
+        }}
+      >
+        <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: '#666666' }}>
+          Little Canada Café
+        </span>
+        <a
+          href="tel:+251988984865"
+          className="flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold border transition-all active:scale-95"
+          style={{
+            borderColor: '#F5A623',
+            backgroundColor: '#F5A623',
+            color: '#0C0A09',
+          }}
+        >
+          📞 Call Now
+        </a>
       </div>
     </div>
   )

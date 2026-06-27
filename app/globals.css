@@ -28,6 +28,21 @@
   50%       { box-shadow: 0 0 24px 8px rgba(232, 122, 48, 0.2); }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes splash-progress {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+@keyframes splash-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; pointer-events: none; }
+}
+
 .deco-1 { animation: float  4s ease-in-out infinite alternate; }
 .deco-2 { animation: float  5s ease-in-out infinite alternate; animation-delay: 1.2s; }
 .deco-3 { animation: float2 3.5s ease-in-out infinite alternate; animation-delay: 0.6s; }
@@ -41,3 +56,26 @@
 
 /* ─── Touch-action for 3D canvas drag ─────────────────────────────────────── */
 canvas { touch-action: none; }
+
+/* ─── Menu Card Hover Effects ─────────────────────────────────────────────── */
+.menu-card {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+}
+.menu-card:hover {
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35), 0 0 0 2px rgba(245,166,35,0.6);
+}
+
+/* ─── CTA Shimmer Button ──────────────────────────────────────────────────── */
+.cta-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+.cta-shimmer:hover {
+  animation-duration: 1.5s;
+}
+
+/* ─── Splash Screen ───────────────────────────────────────────────────────── */
+.splash-screen {
+  animation: splash-fade-out 0.4s ease-out forwards;
+  animation-delay: 1.4s;
+}
